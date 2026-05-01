@@ -1,0 +1,4178 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Récolte">
+<meta name="theme-color" content="#2d6a3f">
+<title>Suivi Récolte</title>
+<link rel="manifest" href='data:application/manifest+json,{"name":"Suivi Récolte","short_name":"Récolte","start_url":".","display":"standalone","background_color":"%23f5f3ee","theme_color":"%232d6a3f","icons":[{"src":"data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 fill=%22%232d6a3f%22/><text x=%2250%22 y=%2265%22 font-size=%2260%22 text-anchor=%22middle%22 fill=%22white%22>🌱</text></svg>","sizes":"192x192","type":"image/svg+xml"}]}'>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; padding: 0; }
+
+:root {
+  --bg: #f5f3ee;
+  --surface: #ffffff;
+  --surface-alt: #faf8f3;
+  --border: #e4e0d5;
+  --border-strong: #c9c3b0;
+  --text: #2a2a2a;
+  --text-muted: #6b6b6b;
+  --text-subtle: #9a9a9a;
+
+  /* Asperges - vert */
+  --asp-primary: #2d6a3f;
+  --asp-primary-dark: #1f4d2c;
+  --asp-light: #e8f0e6;
+  --asp-accent: #5a9456;
+
+  /* Fraises - rouge */
+  --str-primary: #b8312a;
+  --str-primary-dark: #8a2320;
+  --str-light: #f7e5e3;
+  --str-accent: #d54a3f;
+
+  --warn: #c47b2e;
+  --warn-light: #fbefdc;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-lg: 0 4px 16px rgba(0,0,0,0.08);
+
+  --radius: 14px;
+  --radius-lg: 20px;
+
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 17px;
+  line-height: 1.5;
+  padding-bottom: 90px;
+  padding-top: env(safe-area-inset-top);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ========== HEADER ========== */
+.app-header {
+  background: var(--surface);
+  padding: 16px 18px 14px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  padding-top: calc(16px + env(safe-area-inset-top));
+}
+.app-header h1 {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+.app-header .subtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.season-badge {
+  background: var(--asp-light);
+  color: var(--asp-primary-dark);
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sync-badge {
+  background: none;
+  border: 1.5px solid var(--border-strong);
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.sync-badge:active { transform: scale(0.95); }
+.sync-badge.sync-ok { background: #e8f5e9; border-color: #4caf50; color: #1b5e20; }
+.sync-badge.sync-syncing { background: #fff3e0; border-color: #ff9800; animation: syncSpin 1s linear infinite; }
+.sync-badge.sync-error { background: #ffebee; border-color: #c62828; color: #c62828; }
+.sync-badge.sync-off { opacity: 0.45; }
+@keyframes syncSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ========== BOTTOM NAV ========== */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  z-index: 200;
+  padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.04);
+}
+.nav-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 10px 2px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-subtle);
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  transition: color 0.15s;
+}
+.nav-btn .icon {
+  font-size: 20px;
+  line-height: 1;
+}
+.nav-btn.active {
+  color: var(--asp-primary);
+}
+.nav-btn.active[data-tab="fraises"] {
+  color: var(--str-primary);
+}
+
+/* ========== PAGES ========== */
+.page {
+  display: none;
+  padding: 18px 16px 20px;
+  max-width: 700px;
+  margin: 0 auto;
+}
+.page.active { display: block; }
+
+.page-title {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 0 0 4px;
+}
+.page-subtitle {
+  color: var(--text-muted);
+  font-size: 15px;
+  margin-bottom: 20px;
+}
+
+/* ========== CARDS ========== */
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 18px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+}
+.card-title {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 600;
+  margin: 0 0 14px;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-title .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--asp-primary);
+}
+.card-title.str .dot { background: var(--str-primary); }
+
+/* ========== BUTTONS ========== */
+.btn {
+  background: var(--asp-primary);
+  color: white;
+  border: none;
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: 17px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  width: 100%;
+  transition: transform 0.1s, box-shadow 0.15s;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn:active { transform: scale(0.98); }
+.btn.str { background: var(--str-primary); }
+.btn.secondary {
+  background: var(--surface);
+  color: var(--text);
+  border: 1.5px solid var(--border-strong);
+}
+.btn.danger {
+  background: transparent;
+  color: var(--str-primary);
+  border: 1.5px solid var(--str-primary);
+}
+.btn-rebut {
+  background: #9a3d36;
+  color: white;
+  border: none;
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: 17px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  width: 100%;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: transform 0.1s;
+}
+.btn-rebut:active { transform: scale(0.98); }
+.btn.small {
+  padding: 10px 14px;
+  font-size: 15px;
+  min-height: 44px;
+  width: auto;
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn-row {
+  display: flex;
+  gap: 10px;
+}
+.btn-row .btn { flex: 1; }
+
+/* ========== FORM INPUTS ========== */
+.field {
+  margin-bottom: 14px;
+}
+.field label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+input[type="text"],
+input[type="number"],
+input[type="date"],
+select,
+textarea {
+  width: 100%;
+  padding: 14px 14px;
+  font-size: 17px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--surface);
+  font-family: inherit;
+  color: var(--text);
+  min-height: 52px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--asp-primary);
+  box-shadow: 0 0 0 3px rgba(45,106,63,0.12);
+}
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* ========== ROW GRID (asperges) ========== */
+.rows-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.rows-info {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+.rows-info b { color: var(--asp-primary-dark); }
+
+/* ===== Vue du champ (aérienne) ===== */
+.field-view {
+  position: relative;
+  margin: 6px -4px 14px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #6b4d2e;
+  box-shadow: inset 0 0 0 2px #4a3620, var(--shadow-md);
+  touch-action: manipulation;
+}
+.field-view svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.field-view .hitzone {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.field-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 8px 2px 0;
+}
+.field-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.field-legend i {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  display: inline-block;
+  border: 1px solid rgba(0,0,0,0.15);
+}
+
+.field-toggle {
+  display: flex;
+  background: var(--surface-alt);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+}
+.field-toggle button {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 12px 10px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 9px;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.field-toggle button.active {
+  background: var(--surface);
+  color: var(--asp-primary-dark);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ========== PRICE / QTY INPUTS ========== */
+.product-line {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 36px;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.product-line:last-child { border-bottom: none; }
+.product-line .name {
+  font-weight: 600;
+  font-size: 16px;
+}
+.product-line input {
+  padding: 10px 10px;
+  min-height: 44px;
+  font-size: 16px;
+  text-align: center;
+}
+.product-line .price-input { position: relative; }
+.product-line .price-input::after {
+  content: '€/kg';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px;
+  color: var(--text-subtle);
+  pointer-events: none;
+}
+.product-line .qty-input::after {
+  content: 'kg';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px;
+  color: var(--text-subtle);
+  pointer-events: none;
+}
+.product-line .qty-input { position: relative; }
+.product-line .qty-input input { padding-right: 22px; }
+.product-line .price-input input { padding-right: 28px; }
+.product-line .delete-btn {
+  background: none;
+  border: none;
+  color: var(--str-primary);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+}
+.product-line .delete-btn:active { background: var(--str-light); }
+
+/* ========== STATS ========== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 14px;
+  box-shadow: var(--shadow-sm);
+}
+.stat-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+.stat-value {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 600;
+  margin-top: 4px;
+  letter-spacing: -0.02em;
+}
+.stat-value.asp { color: var(--asp-primary-dark); }
+.stat-value.str { color: var(--str-primary); }
+.stat-sub {
+  font-size: 12px;
+  color: var(--text-subtle);
+  margin-top: 2px;
+}
+
+/* ========== LIST ========== */
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.history-item {
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.history-item .date {
+  font-weight: 600;
+  font-size: 15px;
+}
+.history-item .meta {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.history-item .amount {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--asp-primary-dark);
+}
+
+/* ========== CALCULATOR ========== */
+.calc-mode {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.calc-mode button {
+  flex: 1;
+  padding: 14px;
+  border: 1.5px solid var(--border-strong);
+  background: var(--surface);
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--text-muted);
+}
+.calc-mode button.active {
+  border-color: var(--asp-primary);
+  background: var(--asp-light);
+  color: var(--asp-primary-dark);
+}
+.calc-mode button.active.str {
+  border-color: var(--str-primary);
+  background: var(--str-light);
+  color: var(--str-primary-dark);
+}
+
+.slider-container {
+  margin: 24px 0;
+}
+.slider-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.slider-value-display {
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 600;
+  color: var(--asp-primary-dark);
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
+}
+.slider-value-display.str { color: var(--str-primary); }
+
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 8px;
+  background: var(--border);
+  border-radius: 8px;
+  outline: none;
+  padding: 0;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 32px;
+  height: 32px;
+  background: var(--asp-primary);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 4px solid white;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+input[type="range"].str::-webkit-slider-thumb {
+  background: var(--str-primary);
+}
+
+.calc-result {
+  background: var(--asp-light);
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+  margin-top: 16px;
+}
+.calc-result.str { background: var(--str-light); }
+.calc-result-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+.calc-result-value {
+  font-family: var(--font-display);
+  font-size: 48px;
+  font-weight: 600;
+  margin-top: 4px;
+  letter-spacing: -0.03em;
+  color: var(--asp-primary-dark);
+}
+.calc-result.str .calc-result-value { color: var(--str-primary-dark); }
+
+/* ========== CHARTS ========== */
+.chart-container {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-sm);
+}
+.chart-title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  margin: 0 0 12px;
+}
+.chart-box {
+  width: 100%;
+  position: relative;
+}
+svg.chart { display: block; width: 100%; height: auto; }
+
+/* ========== MODAL ========== */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 500;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+}
+.modal-backdrop.active { display: flex; }
+.modal {
+  background: var(--surface);
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-width: 500px;
+  padding: 20px 18px calc(20px + env(safe-area-inset-bottom));
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slide-up 0.25s ease;
+}
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.modal-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0 0 14px;
+  letter-spacing: -0.01em;
+}
+.modal-handle {
+  width: 40px;
+  height: 4px;
+  background: var(--border-strong);
+  border-radius: 2px;
+  margin: -8px auto 14px;
+}
+
+/* ========== TABS inside pages ========== */
+.subtabs {
+  display: flex;
+  background: var(--surface-alt);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+}
+.subtabs button {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 11px 8px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 9px;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-family: inherit;
+}
+.subtabs button.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ========== TABLE ========== */
+.week-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.week-table th {
+  text-align: left;
+  padding: 10px 6px;
+  background: var(--surface-alt);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.03em;
+  border-bottom: 1px solid var(--border);
+}
+.week-table td {
+  padding: 10px 6px;
+  border-bottom: 1px solid var(--border);
+}
+.week-table tr:last-child td { border-bottom: none; }
+.week-table .num { text-align: right; font-weight: 600; font-family: var(--font-display); }
+
+/* Picker tips */
+.picker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: var(--surface-alt);
+  border-radius: 10px;
+  margin-bottom: 6px;
+  border: 1px solid var(--border);
+}
+.picker-row .rank {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--asp-primary-dark);
+  margin-right: 10px;
+  min-width: 26px;
+}
+.picker-row .name { flex: 1; font-weight: 600; }
+.picker-row .kg { font-family: var(--font-display); font-weight: 600; font-size: 16px; }
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 40px 16px;
+  color: var(--text-muted);
+}
+.empty-state .emoji {
+  font-size: 40px;
+  margin-bottom: 8px;
+}
+
+/* Dashboard hero */
+.hero-stat {
+  background: linear-gradient(135deg, var(--asp-primary) 0%, var(--asp-primary-dark) 100%);
+  color: white;
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-md);
+}
+.hero-stat .label {
+  font-size: 13px;
+  opacity: 0.85;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+.hero-stat .value {
+  font-family: var(--font-display);
+  font-size: 44px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  margin-top: 4px;
+  line-height: 1;
+}
+.hero-stat .sub {
+  font-size: 14px;
+  opacity: 0.9;
+  margin-top: 6px;
+}
+
+.mini-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.chip {
+  background: rgba(255,255,255,0.18);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Collapsible */
+details.expand {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  margin-bottom: 10px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+details.expand summary {
+  padding: 14px 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  list-style: none;
+}
+details.expand summary::-webkit-details-marker { display: none; }
+details.expand summary::after {
+  content: '▾';
+  color: var(--text-muted);
+  transition: transform 0.2s;
+}
+details.expand[open] summary::after { transform: rotate(180deg); }
+details.expand .body {
+  padding: 0 16px 16px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  top: calc(20px + env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%) translateY(-120%);
+  background: var(--asp-primary-dark);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 15px;
+  box-shadow: var(--shadow-lg);
+  z-index: 1000;
+  transition: transform 0.3s;
+  max-width: 90%;
+  text-align: center;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.error { background: var(--str-primary-dark); }
+
+/* Category card (fraises) */
+.cat-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px;
+  background: var(--surface-alt);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+.cat-card .cat-name {
+  font-weight: 600;
+  font-size: 16px;
+}
+.cat-card .cat-meta {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.cat-card .cat-right {
+  text-align: right;
+}
+.cat-card .cat-amount {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--str-primary-dark);
+}
+
+/* Truck (cold storage) view */
+.truck-view {
+  position: relative;
+  margin: 6px -4px 0;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #2c3640;
+  box-shadow: inset 0 0 0 3px #1a232c, var(--shadow-md);
+}
+.truck-view svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.truck-view .crate-hit {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Str variety cards (buy-resell) */
+.str-variety-card {
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.str-variety-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--str-primary-dark);
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.str-line-group {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.str-line-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.02em;
+}
+.str-qty-price {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.str-qty-price > div { display: flex; flex-direction: column; }
+.str-mini-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.str-qty-price input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 16px;
+  font-weight: 600;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+}
+.str-qty-price input:focus {
+  outline: none;
+  border-color: var(--str-primary);
+  box-shadow: 0 0 0 3px rgba(184,49,42,0.12);
+}
+.str-line-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  margin-top: 6px;
+  background: var(--surface);
+  border-radius: 10px;
+  font-size: 13px;
+  border: 1px dashed var(--border-strong);
+}
+.str-summary-kg, .str-summary-marge {
+  white-space: nowrap;
+}
+
+/* Ranking */
+.rank-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  background: var(--surface-alt);
+  border-radius: 10px;
+  margin-bottom: 6px;
+  border: 1px solid var(--border);
+}
+.rank-item .pos {
+  width: 32px;
+  height: 32px;
+  background: var(--asp-light);
+  color: var(--asp-primary-dark);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-family: var(--font-display);
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+.rank-item.top .pos { background: var(--asp-primary); color: white; }
+.rank-item .info { flex: 1; }
+.rank-item .name { font-weight: 600; }
+.rank-item .detail { font-size: 13px; color: var(--text-muted); }
+.rank-item .total { font-family: var(--font-display); font-weight: 600; font-size: 17px; }
+
+/* Legend */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 13px;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+/* Button helper */
+.add-btn {
+  background: var(--asp-light);
+  color: var(--asp-primary-dark);
+  border: 1.5px dashed var(--asp-primary);
+  padding: 12px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  font-family: inherit;
+  font-size: 15px;
+}
+.add-btn.str {
+  background: var(--str-light);
+  color: var(--str-primary-dark);
+  border-color: var(--str-primary);
+}
+
+.inline-hint {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
+.danger-zone {
+  border: 1px dashed var(--str-primary);
+  padding: 14px;
+  border-radius: var(--radius);
+  margin-top: 20px;
+}
+.danger-zone h3 {
+  color: var(--str-primary);
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+
+/* Focus ring */
+button:focus-visible, .row-cell:focus-visible {
+  outline: 3px solid var(--asp-primary);
+  outline-offset: 2px;
+}
+
+/* iOS number input */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="app-header">
+  <div class="header-flex">
+    <div>
+      <h1 id="headerTitle">Suivi Récolte</h1>
+      <div class="subtitle" id="headerDate"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button id="syncBadge" class="sync-badge sync-off" title="Synchronisation désactivée" aria-label="Synchroniser">🚫</button>
+      <div class="season-badge" id="seasonBadge">Saison</div>
+    </div>
+  </div>
+</header>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ========== PAGE : ASPERGES ========== -->
+<div class="page active" id="page-asperges" data-color="asp">
+  <h2 class="page-title">Asperges</h2>
+  <p class="page-subtitle">Saisie des rangs et production du jour</p>
+
+  <div class="subtabs" id="aspSubtabs">
+    <button class="active" data-sub="today">Aujourd'hui</button>
+    <button data-sub="history">Historique</button>
+  </div>
+
+  <!-- Aujourd'hui -->
+  <div id="asp-today">
+
+    <div class="card">
+      <h3 class="card-title"><span class="dot"></span>Date de travail</h3>
+      <input type="date" id="aspDate">
+    </div>
+
+    <div class="card">
+      <h3 class="card-title"><span class="dot"></span>Rangs cueillis</h3>
+      <div class="field-toggle" id="fieldToggle">
+        <button class="active" data-field="adulte">Champ adulte (42)</button>
+        <button data-field="jeune">Champ jeune (17)</button>
+      </div>
+
+      <div class="rows-header">
+        <div class="rows-info"><b id="rowsDone">0</b> cueillis · <b id="rowsRebut" style="color:#9a3d36">0</b> rebutés · <b id="rowsSelected">0</b> sél. / <span id="rowsTotal">42</span></div>
+        <button class="btn small secondary" id="selectAllBtn">Tout sél.</button>
+      </div>
+
+      <div class="field-view" id="fieldView"></div>
+      <div class="field-legend">
+        <span><i style="background:#8fbf72"></i>À cueillir</span>
+        <span><i style="background:#2d6a3f"></i>Cueilli</span>
+        <span><i style="background:#9a3d36"></i>Rebuté</span>
+        <span><i style="background:#ffd43b;border-color:#c98a00"></i>Sélectionné</span>
+      </div>
+
+      <div class="inline-hint">💡 Touchez les rangs pour sélectionner, puis saisissez les kilos et cueilleur ci-dessous.</div>
+
+      <div style="margin-top:14px;">
+        <div class="field-row">
+          <div class="field">
+            <label>Kilos totaux</label>
+            <input type="number" id="selKg" step="0.1" placeholder="0" inputmode="decimal">
+          </div>
+          <div class="field">
+            <label>Cueilleur (option.)</label>
+            <input type="text" id="selPicker" placeholder="Nom">
+          </div>
+        </div>
+        <button class="btn" id="saveRowsBtn">✓ Enregistrer les rangs cueillis</button>
+        <button class="btn btn-rebut" id="rebutRowsBtn" style="margin-top:8px;">✕ Marquer comme rebutés</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="card-title"><span class="dot"></span>Production du jour — Types</h3>
+      <div id="productLines"></div>
+      <div class="stats-grid" style="margin-top:14px;">
+        <div class="stat-card">
+          <div class="stat-label">Kilos totaux</div>
+          <div class="stat-value asp" id="totalKgToday">0 kg</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">CA du jour</div>
+          <div class="stat-value asp" id="totalCaToday">0 €</div>
+        </div>
+      </div>
+      <div class="btn-row" style="margin-top:12px;">
+        <button class="btn" id="saveProductBtn">Enregistrer production</button>
+      </div>
+      <div class="inline-hint">✏️ Les prix se modifient à tout moment et s'enregistrent automatiquement.</div>
+    </div>
+
+    <details class="expand">
+      <summary>Cueilleurs du jour</summary>
+      <div class="body" id="dayPickersList">
+        <div class="empty-state"><div class="emoji">👥</div>Aucun cueilleur saisi pour ce jour</div>
+      </div>
+    </details>
+
+  </div>
+
+  <!-- Historique -->
+  <div id="asp-history" style="display:none;">
+    <div class="card">
+      <h3 class="card-title"><span class="dot"></span>Historique des journées</h3>
+      <div class="history-list" id="aspHistoryList">
+        <div class="empty-state"><div class="emoji">📅</div>Aucune journée enregistrée</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== PAGE : FRAISES ========== -->
+<div class="page" id="page-fraises" data-color="str">
+  <h2 class="page-title">Fraises</h2>
+  <p class="page-subtitle">Achat-revente : marge journalière</p>
+
+  <div class="subtabs" id="strSubtabs">
+    <button class="active" data-sub="today">Aujourd'hui</button>
+    <button data-sub="cats">Variétés</button>
+    <button data-sub="history">Historique</button>
+  </div>
+
+  <!-- Aujourd'hui -->
+  <div id="str-today">
+    <div class="card">
+      <h3 class="card-title str"><span class="dot"></span>Date de travail</h3>
+      <input type="date" id="strDate">
+    </div>
+
+    <div class="card">
+      <h3 class="card-title str"><span class="dot"></span>Achat-revente du jour</h3>
+      <p style="color:var(--text-muted); font-size:13px; margin-top:-6px;">Saisissez pour chaque variété les kilos achetés, les kilos vendus et les prix.</p>
+      <div id="strProductLines"></div>
+
+      <div class="stats-grid" style="margin-top:14px; grid-template-columns: 1fr 1fr 1fr;">
+        <div class="stat-card">
+          <div class="stat-label">Acheté</div>
+          <div class="stat-value str" id="strTotalKgAchat" style="font-size:20px;">0 kg</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Vendu</div>
+          <div class="stat-value str" id="strTotalKgVente" style="font-size:20px;">0 kg</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Manquant</div>
+          <div class="stat-value" id="strTotalKgManquant" style="font-size:20px; color:#c47b2e;">0 kg</div>
+        </div>
+      </div>
+
+      <div class="stats-grid" style="margin-top:10px; grid-template-columns: 1fr 1fr;">
+        <div class="stat-card">
+          <div class="stat-label">Coût d'achat</div>
+          <div class="stat-value" id="strCoutAchat" style="font-size:20px; color:var(--text-muted);">0 €</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">CA vente</div>
+          <div class="stat-value str" id="strTotalCaToday" style="font-size:20px;">0 €</div>
+        </div>
+      </div>
+
+      <div class="stat-card" style="margin-top:10px; text-align:center; padding:16px; background:var(--str-light); border:2px solid var(--str-primary);">
+        <div class="stat-label" style="color:var(--str-primary-dark);">Marge brute du jour</div>
+        <div class="stat-value" id="strMarge" style="font-size:28px; color:var(--str-primary-dark); font-weight:700;">0 €</div>
+      </div>
+
+      <button class="btn str" id="strSaveProductBtn" style="margin-top:12px;">Enregistrer la journée</button>
+      <div class="inline-hint">✏️ Les prix se modifient à tout moment et s'enregistrent automatiquement.</div>
+    </div>
+  </div>
+
+  <!-- Variétés -->
+  <div id="str-cats" style="display:none;">
+    <div class="card">
+      <h3 class="card-title str"><span class="dot"></span>Mes variétés</h3>
+      <p style="color:var(--text-muted); font-size:14px; margin-top:-6px;">Gariguette, Ciflorette, Mara des bois... créez vos variétés avec leurs prix d'achat et de vente habituels.</p>
+      <div id="strCatsList"></div>
+      <button class="add-btn str" id="addStrCatBtn">+ Ajouter une variété</button>
+    </div>
+  </div>
+
+  <!-- Historique -->
+  <div id="str-history" style="display:none;">
+    <div class="card">
+      <h3 class="card-title str"><span class="dot"></span>Historique des journées</h3>
+      <div class="history-list" id="strHistoryList">
+        <div class="empty-state"><div class="emoji">📅</div>Aucune journée enregistrée</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== PAGE : CAMION ========== -->
+<div class="page" id="page-truck">
+  <h2 class="page-title">🚚 Camion frigorifique</h2>
+  <p class="page-subtitle">Vue de dessus — touchez une caisse pour la remplir</p>
+
+  <div class="card">
+    <div class="stats-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+      <div class="stat-card">
+        <div class="stat-label">Asperges</div>
+        <div class="stat-value asp" id="truckAspKg" style="font-size:20px;">0 kg</div>
+        <div class="stat-sub" id="truckAspCount">0 caisses</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Fraises</div>
+        <div class="stat-value str" id="truckStrKg" style="font-size:20px;">0 kg</div>
+        <div class="stat-sub" id="truckStrCount">0 caisses</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total</div>
+        <div class="stat-value" id="truckTotalKg" style="font-size:20px;">0 kg</div>
+        <div class="stat-sub" id="truckOccupancy">0 / 20</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 class="card-title"><span class="dot"></span>Vue de dessus</h3>
+    <div id="truckView" class="truck-view"></div>
+
+    <div class="truck-legend" style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--text-muted);margin-top:10px;">
+      <span><i style="background:#3a4651; width:14px; height:14px; display:inline-block; border-radius:2px; vertical-align:middle; margin-right:4px;"></i>Vide</span>
+      <span><i style="background:#2d6a3f; width:14px; height:14px; display:inline-block; border-radius:2px; vertical-align:middle; margin-right:4px;"></i>Asperges</span>
+      <span><i style="background:#b8312a; width:14px; height:14px; display:inline-block; border-radius:2px; vertical-align:middle; margin-right:4px;"></i>Fraises</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 class="card-title"><span class="dot"></span>Configuration</h3>
+    <div class="field-row">
+      <div class="field">
+        <label>Longueur (rangées)</label>
+        <input type="number" id="truckRows" min="1" max="12" value="6">
+      </div>
+      <div class="field">
+        <label>Largeur (caisses)</label>
+        <input type="number" id="truckCols" min="1" max="5" value="3">
+      </div>
+    </div>
+    <button class="btn small" id="truckConfigBtn">Mettre à jour</button>
+    <button class="btn small danger" id="truckEmptyBtn" style="margin-top:8px;">🗑️ Vider tout le camion</button>
+  </div>
+</div>
+
+<!-- ========== PAGE : CALCULATEUR ========== -->
+<div class="page" id="page-calc">
+  <h2 class="page-title">Calculateur</h2>
+  <p class="page-subtitle">Simulez vos revenus</p>
+
+  <div class="calc-mode" id="calcModeTabs">
+    <button class="active" data-mode="asp">Asperges</button>
+    <button data-mode="str">Fraises</button>
+  </div>
+
+  <!-- Asperges: simple quantity × price -->
+  <div class="card" id="calcAspCard">
+    <h3 class="card-title" id="calcCardTitle"><span class="dot"></span>Simulation</h3>
+
+    <div class="field">
+      <label id="calcCatLabel">Type d'asperge</label>
+      <select id="calcCategory"></select>
+    </div>
+
+    <div class="field">
+      <label>Quantité (kg)</label>
+      <input type="number" id="calcQty" step="0.5" value="10" inputmode="decimal">
+    </div>
+
+    <div class="slider-container">
+      <div class="slider-value-display" id="calcPriceDisplay">0 €/kg</div>
+      <input type="range" id="calcPriceSlider" min="0" max="30" step="0.1" value="5">
+      <div class="slider-labels">
+        <span>0 €</span>
+        <span id="calcPriceMax">30 €</span>
+      </div>
+    </div>
+
+    <div class="calc-result" id="calcResult">
+      <div class="calc-result-label">Ce que ça rapporte</div>
+      <div class="calc-result-value" id="calcResultValue">0 €</div>
+    </div>
+  </div>
+
+  <!-- Fraises: buy-resell margin simulator -->
+  <div class="card" id="calcStrCard" style="display:none;">
+    <h3 class="card-title str"><span class="dot" style="background:var(--str-primary);"></span>Simulation de marge</h3>
+
+    <div class="field">
+      <label>Variété</label>
+      <select id="calcStrCategory"></select>
+    </div>
+
+    <div class="field">
+      <label>Quantité achetée (kg)</label>
+      <input type="number" id="calcStrQty" step="0.5" value="50" inputmode="decimal">
+    </div>
+
+    <div class="slider-container">
+      <div class="str-mini-label" style="margin-bottom:2px;">Prix d'achat</div>
+      <div class="slider-value-display str" id="calcStrAchatDisplay">0 €/kg</div>
+      <input type="range" id="calcStrAchatSlider" class="str" min="0" max="20" step="0.1" value="3">
+      <div class="slider-labels">
+        <span>0 €</span>
+        <span id="calcStrAchatMax">20 €</span>
+      </div>
+    </div>
+
+    <div class="slider-container" style="margin-top:14px;">
+      <div class="str-mini-label" style="margin-bottom:2px;">Prix de vente</div>
+      <div class="slider-value-display str" id="calcStrVenteDisplay">0 €/kg</div>
+      <input type="range" id="calcStrVenteSlider" class="str" min="0" max="20" step="0.1" value="5">
+      <div class="slider-labels">
+        <span>0 €</span>
+        <span id="calcStrVenteMax">20 €</span>
+      </div>
+    </div>
+
+    <div class="stats-grid" style="margin-top:14px; grid-template-columns: 1fr 1fr;">
+      <div class="stat-card">
+        <div class="stat-label">Coût d'achat</div>
+        <div class="stat-value" id="calcStrAchat" style="font-size:20px; color:var(--text-muted);">0 €</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">CA vente</div>
+        <div class="stat-value str" id="calcStrVente" style="font-size:20px;">0 €</div>
+      </div>
+    </div>
+
+    <div class="calc-result str" id="calcStrResult" style="margin-top:10px;">
+      <div class="calc-result-label">Marge brute</div>
+      <div class="calc-result-value" id="calcStrResultValue">0 €</div>
+      <div style="font-size:13px; margin-top:4px; opacity:0.8;">
+        <span id="calcStrMargePercent">0 %</span> sur vente
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== PAGE : DASHBOARD ========== -->
+<div class="page" id="page-dashboard">
+  <h2 class="page-title">Tableau de bord</h2>
+  <p class="page-subtitle">Vue complète de la saison</p>
+
+  <div class="subtabs" id="dashSubtabs">
+    <button class="active" data-sub="all">Global</button>
+    <button data-sub="asp">Asperges</button>
+    <button data-sub="str">Fraises</button>
+  </div>
+
+  <div id="dashContent"></div>
+
+</div>
+
+<!-- ========== PAGE : RÉGLAGES ========== -->
+<div class="page" id="page-settings">
+  <h2 class="page-title">Réglages</h2>
+  <p class="page-subtitle">Configuration et données</p>
+
+  <div class="card">
+    <h3 class="card-title"><span class="dot"></span>Champs asperges</h3>
+    <div class="field-row">
+      <div class="field">
+        <label>Rangs champ adulte</label>
+        <input type="number" id="setRowsAdulte" min="1" max="200">
+      </div>
+      <div class="field">
+        <label>Rangs champ jeune</label>
+        <input type="number" id="setRowsJeune" min="1" max="200">
+      </div>
+    </div>
+    <button class="btn small" id="saveRowsConfigBtn">Enregistrer</button>
+  </div>
+
+  <div class="card">
+    <h3 class="card-title"><span class="dot"></span>Saison</h3>
+    <div class="field">
+      <label>Début de saison</label>
+      <input type="date" id="setSeasonStart">
+    </div>
+    <div class="field">
+      <label>Fin de saison (pour projection)</label>
+      <input type="date" id="setSeasonEnd">
+    </div>
+    <button class="btn small" id="saveSeasonBtn">Enregistrer</button>
+  </div>
+
+  <div class="card">
+    <h3 class="card-title"><span class="dot"></span>Synchronisation entre appareils</h3>
+    <p style="color:var(--text-muted); font-size:14px; margin-top:-6px;">Stockez vos données sur un dépôt GitHub privé pour les partager entre plusieurs téléphones.</p>
+
+    <label class="toggle-row" style="display:flex; align-items:center; gap:10px; margin: 12px 0;">
+      <input type="checkbox" id="setCloudEnabled" style="width:auto; margin:0; transform:scale(1.3);">
+      <span>Activer la synchronisation</span>
+    </label>
+
+    <div id="cloudFields">
+      <div class="field">
+        <label>Utilisateur GitHub</label>
+        <input type="text" id="setCloudOwner" placeholder="straclycontact-bit" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Nom du dépôt (privé recommandé)</label>
+        <input type="text" id="setCloudRepo" placeholder="recolte-data" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Branche</label>
+        <input type="text" id="setCloudBranch" placeholder="main" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Nom du fichier de données</label>
+        <input type="text" id="setCloudPath" placeholder="data.json" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Token d'accès GitHub (reste sur ce téléphone)</label>
+        <input type="password" id="setCloudToken" placeholder="ghp_... ou github_pat_..." autocomplete="off">
+      </div>
+
+      <div class="btn-row" style="margin-top:12px;">
+        <button class="btn small secondary" id="cloudPullBtn">⬇️ Récupérer</button>
+        <button class="btn small secondary" id="cloudPushBtn">⬆️ Envoyer</button>
+      </div>
+      <button class="btn small" id="saveCloudBtn" style="margin-top:10px;">Enregistrer la configuration</button>
+
+      <div id="cloudStatus" style="margin-top:12px; padding:10px 12px; background:var(--surface-alt); border-radius:10px; font-size:13px; color:var(--text-muted);"></div>
+
+      <details style="margin-top:12px;">
+        <summary style="cursor:pointer; font-size:14px; color:var(--asp-primary-dark); font-weight:600;">📖 Comment obtenir le token GitHub ?</summary>
+        <div style="padding:12px 6px; font-size:13px; line-height:1.6; color:var(--text-muted);">
+          <p><b>1.</b> Créez un dépôt privé sur <a href="https://github.com/new" target="_blank" rel="noopener">github.com/new</a> (ex: <code>recolte-data</code>). Cochez « Private » et initialisez avec un README.</p>
+          <p><b>2.</b> Allez sur <a href="https://github.com/settings/tokens?type=beta" target="_blank" rel="noopener">github.com/settings/tokens</a> → « Generate new token (fine-grained) ».</p>
+          <p><b>3.</b> Donnez-lui un nom (ex: « app-recolte »), choisissez « Only select repositories » → votre dépôt <code>recolte-data</code>.</p>
+          <p><b>4.</b> Dans « Repository permissions », mettez « Contents » sur « Read and write ». Laissez le reste.</p>
+          <p><b>5.</b> Générez le token, copiez-le (commence par <code>github_pat_...</code>) et collez-le ci-dessus.</p>
+          <p><b>6.</b> Sur le 2ᵉ téléphone : même procédure, même dépôt, même token (ou un nouveau token lié au même dépôt).</p>
+        </div>
+      </details>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 class="card-title"><span class="dot"></span>Sauvegarde</h3>
+    <p style="color:var(--text-muted); font-size:14px; margin-top:-6px;">Exportez vos données pour les conserver en lieu sûr.</p>
+    <div class="btn-row">
+      <button class="btn small secondary" id="exportBtn">📤 Exporter</button>
+      <button class="btn small secondary" id="importBtn">📥 Importer</button>
+    </div>
+    <input type="file" id="importFile" accept=".json" style="display:none;">
+  </div>
+
+  <div class="danger-zone">
+    <h3>Zone dangereuse</h3>
+    <button class="btn small danger" id="resetBtn">Tout effacer</button>
+  </div>
+
+  <div style="text-align:center; color:var(--text-subtle); font-size:12px; margin-top:20px;">
+    v1.0 — Données stockées en local sur votre appareil
+  </div>
+</div>
+
+<!-- ========== MODAL ========== -->
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal" id="modal">
+    <div class="modal-handle"></div>
+    <h3 class="modal-title" id="modalTitle"></h3>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- ========== BOTTOM NAV ========== -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" data-tab="asperges">
+    <span class="icon">🌱</span>
+    <span>Asperges</span>
+  </button>
+  <button class="nav-btn" data-tab="fraises">
+    <span class="icon">🍓</span>
+    <span>Fraises</span>
+  </button>
+  <button class="nav-btn" data-tab="truck">
+    <span class="icon">🚚</span>
+    <span>Camion</span>
+  </button>
+  <button class="nav-btn" data-tab="calc">
+    <span class="icon">🧮</span>
+    <span>Calcul</span>
+  </button>
+  <button class="nav-btn" data-tab="dashboard">
+    <span class="icon">📊</span>
+    <span>Stats</span>
+  </button>
+  <button class="nav-btn" data-tab="settings">
+    <span class="icon">⚙️</span>
+    <span>Régl.</span>
+  </button>
+</nav>
+
+<script>
+/* =====================================================================
+   DATA MODEL & STORAGE
+   ===================================================================== */
+
+const STORAGE_KEY = 'recolte-app-v1';
+
+const DEFAULT_PRODUCTS = [
+  { id: 'grosses', name: 'Grosses', price: 8.0 },
+  { id: 'belles', name: 'Belles', price: 7.0 },
+  { id: 'moyennes', name: 'Moyennes', price: 6.0 },
+  { id: 'courtes', name: 'Courtes', price: 4.0 },
+  { id: 'tetes', name: 'Têtes', price: 3.0 },
+  { id: 'balai', name: 'Balai', price: 2.0 }
+];
+
+const DEFAULT_STATE = {
+  config: {
+    rowsAdulte: 42,
+    rowsJeune: 17,
+    seasonStart: null,
+    seasonEnd: null
+  },
+  cloud: {
+    enabled: false,
+    owner: '',     // GitHub username/org
+    repo: '',      // repo name (private)
+    branch: 'main',
+    path: 'data.json',
+    token: '',     // PAT (stored locally only)
+    lastSha: null, // last known file sha
+    lastSyncAt: 0, // ms timestamp of last successful sync
+    deviceId: ''   // random id to identify this device
+  },
+  products: DEFAULT_PRODUCTS,  // asperges types + prices
+  strCategories: [
+    { id: 'gariguette', name: 'Gariguette', priceAchat: 3.5, priceVente: 5.5 },
+    { id: 'ciflorette', name: 'Ciflorette', priceAchat: 4.0, priceVente: 6.5 }
+  ],
+  // Asperges days:  { 'YYYY-MM-DD': { rows: {adulte:[{rows:[1,2,3], kg:12.5, picker:'Paul'}], jeune:[...] }, rebuts: {adulte:[1,2], jeune:[]}, products: { grosses:{kg:10,price:8}, ...}, _ts: ms } }
+  aspDays: {},
+  // Strawberries days (buy-resell): { 'YYYY-MM-DD': { items: {catId: {kgAchat, priceAchat, kgVente, priceVente}}, _ts: ms } }
+  strDays: {},
+  // Truck cold storage: { rows: 6, cols: 3, crates: { 'r-c': {type: 'asp'|'str', label: 'Grosses', kg: 12} } }
+  truck: {
+    rows: 6,
+    cols: 3,
+    crates: {}
+  }
+};
+
+let state = loadState();
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return structuredClone(DEFAULT_STATE);
+    const parsed = JSON.parse(raw);
+    // merge with defaults
+    const merged = deepMerge(structuredClone(DEFAULT_STATE), parsed);
+
+    // Migration: ensure "Belles" exists in products list (added in v1.1)
+    if (Array.isArray(merged.products)) {
+      const hasBelles = merged.products.some(p => p.id === 'belles');
+      if (!hasBelles) {
+        // Insert Belles between Grosses and Moyennes
+        const idx = merged.products.findIndex(p => p.id === 'moyennes');
+        const newBelles = { id: 'belles', name: 'Belles', price: 7.0 };
+        if (idx >= 0) {
+          merged.products.splice(idx, 0, newBelles);
+        } else {
+          merged.products.push(newBelles);
+        }
+      }
+    }
+
+    // Migration: ensure truck structure exists (added in v1.2)
+    if (!merged.truck || typeof merged.truck !== 'object') {
+      merged.truck = { rows: 4, cols: 5, crates: {} };
+    }
+    if (!merged.truck.crates) merged.truck.crates = {};
+    if (!merged.truck.rows) merged.truck.rows = 4;
+    if (!merged.truck.cols) merged.truck.cols = 5;
+    // Migration: old strCategories used "price" (single price for production mode)
+    // Now: use priceAchat + priceVente for buy-resell mode
+    if (Array.isArray(merged.strCategories)) {
+      merged.strCategories = merged.strCategories.map(c => {
+        if (c.priceAchat === undefined && c.priceVente === undefined && c.price !== undefined) {
+          // old shape - migrate
+          return {
+            id: c.id,
+            name: c.name,
+            priceAchat: 0,
+            priceVente: +c.price || 0
+          };
+        }
+        return {
+          id: c.id,
+          name: c.name,
+          priceAchat: +c.priceAchat || 0,
+          priceVente: +c.priceVente || 0
+        };
+      });
+    }
+    // Migration: old strDays items used { kg, price }
+    // Now: { kgAchat, priceAchat, kgVente, priceVente }
+    if (merged.strDays && typeof merged.strDays === 'object') {
+      for (const date in merged.strDays) {
+        const day = merged.strDays[date];
+        if (day && day.items) {
+          for (const cid in day.items) {
+            const it = day.items[cid];
+            if (it.kgAchat === undefined && it.kgVente === undefined && (it.kg !== undefined || it.price !== undefined)) {
+              // migrate old shape - treat old entry as vente only
+              day.items[cid] = {
+                kgAchat: 0,
+                priceAchat: 0,
+                kgVente: +it.kg || 0,
+                priceVente: +it.price || 0
+              };
+            } else {
+              day.items[cid] = {
+                kgAchat: +it.kgAchat || 0,
+                priceAchat: +it.priceAchat || 0,
+                kgVente: +it.kgVente || 0,
+                priceVente: +it.priceVente || 0
+              };
+            }
+          }
+        }
+      }
+    }
+    return merged;
+  } catch (e) {
+    console.error('Erreur chargement', e);
+    return structuredClone(DEFAULT_STATE);
+  }
+}
+
+function deepMerge(target, source) {
+  for (const k in source) {
+    if (source[k] && typeof source[k] === 'object' && !Array.isArray(source[k])) {
+      target[k] = deepMerge(target[k] || {}, source[k]);
+    } else {
+      target[k] = source[k];
+    }
+  }
+  return target;
+}
+
+function saveState() {
+  try {
+    state._modified = Date.now();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    showToast('Erreur de sauvegarde', true);
+  }
+  // Trigger cloud sync (debounced) if enabled
+  if (state.cloud && state.cloud.enabled) {
+    scheduleCloudPush();
+  }
+}
+
+function touchDay(kind, date) {
+  // Mark a day as modified (used for merge conflict resolution)
+  if (kind === 'asp') {
+    const d = getAspDay(date);
+    d._ts = Date.now();
+  } else if (kind === 'str') {
+    const d = getStrDay(date);
+    d._ts = Date.now();
+  }
+}
+
+/* =====================================================================
+   GITHUB CLOUD SYNC
+   ===================================================================== */
+
+const SYNC = {
+  pushTimer: null,
+  pushPending: false,
+  pulling: false,
+  pushing: false,
+  lastError: null,
+  pollTimer: null
+};
+
+function cloudConfigValid() {
+  const c = state.cloud;
+  return c && c.enabled && c.owner && c.repo && c.token && c.path;
+}
+
+function setSyncStatus(status, tooltip) {
+  // status: 'ok' | 'syncing' | 'error' | 'off'
+  const el = document.getElementById('syncBadge');
+  if (!el) return;
+  el.className = 'sync-badge sync-' + status;
+  el.title = tooltip || '';
+  const icons = { ok: '☁️', syncing: '⟳', error: '⚠', off: '🚫' };
+  el.textContent = icons[status] || '';
+}
+
+async function githubGet() {
+  // GET the data.json file; returns { data, sha } or null if not found
+  const c = state.cloud;
+  const url = `https://api.github.com/repos/${encodeURIComponent(c.owner)}/${encodeURIComponent(c.repo)}/contents/${encodeURIComponent(c.path)}?ref=${encodeURIComponent(c.branch || 'main')}`;
+  const res = await fetch(url, {
+    headers: {
+      'Authorization': `Bearer ${c.token}`,
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28'
+    }
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`GET échec: ${res.status} ${await res.text().catch(()=>'')}`);
+  const json = await res.json();
+  // Content is base64 encoded; decode with unicode-safe technique
+  const b64 = (json.content || '').replace(/\n/g, '');
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  const text = new TextDecoder('utf-8').decode(bytes);
+  return { data: JSON.parse(text), sha: json.sha };
+}
+
+async function githubPut(data, sha) {
+  const c = state.cloud;
+  const url = `https://api.github.com/repos/${encodeURIComponent(c.owner)}/${encodeURIComponent(c.repo)}/contents/${encodeURIComponent(c.path)}`;
+  const text = JSON.stringify(data, null, 2);
+  // Encode UTF-8 safely to base64
+  const bytes = new TextEncoder().encode(text);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  const b64 = btoa(bin);
+  const body = {
+    message: `Update data — ${new Date().toISOString()}`,
+    content: b64,
+    branch: c.branch || 'main'
+  };
+  if (sha) body.sha = sha;
+  const res = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${c.token}`,
+      'Accept': 'application/vnd.github+json',
+      'Content-Type': 'application/json',
+      'X-GitHub-Api-Version': '2022-11-28'
+    },
+    body: JSON.stringify(body)
+  });
+  if (res.status === 409 || res.status === 422) {
+    throw Object.assign(new Error('Conflit (SHA obsolète)'), { conflict: true });
+  }
+  if (!res.ok) throw new Error(`PUT échec: ${res.status} ${await res.text().catch(()=>'')}`);
+  const json = await res.json();
+  return json.content ? json.content.sha : null;
+}
+
+function mergeStates(local, remote) {
+  // Merge strategy:
+  // - config: take most recent based on state._modified (here: whoever has higher _modified wins)
+  // - aspDays / strDays: merge key by key, pick the day with higher _ts
+  // - products / strCategories: pick from whichever is more recently modified globally
+  const out = structuredClone(local);
+  const localTs = local._modified || 0;
+  const remoteTs = remote._modified || 0;
+
+  // Top-level: config, products, strCategories, cloud — globally most recent wins
+  if (remoteTs > localTs) {
+    out.config = remote.config || out.config;
+    out.products = remote.products || out.products;
+    out.strCategories = remote.strCategories || out.strCategories;
+    if (remote.truck) out.truck = remote.truck;
+  }
+
+  // Days: per-day most recent wins
+  out.aspDays = out.aspDays || {};
+  const remoteAsp = remote.aspDays || {};
+  for (const date in remoteAsp) {
+    const r = remoteAsp[date];
+    const l = out.aspDays[date];
+    if (!l) { out.aspDays[date] = r; continue; }
+    const lTs = l._ts || 0;
+    const rTs = r._ts || 0;
+    if (rTs >= lTs) out.aspDays[date] = r;
+  }
+
+  out.strDays = out.strDays || {};
+  const remoteStr = remote.strDays || {};
+  for (const date in remoteStr) {
+    const r = remoteStr[date];
+    const l = out.strDays[date];
+    if (!l) { out.strDays[date] = r; continue; }
+    const lTs = l._ts || 0;
+    const rTs = r._ts || 0;
+    if (rTs >= lTs) out.strDays[date] = r;
+  }
+
+  // Keep local cloud config always (it holds the token)
+  out.cloud = local.cloud;
+  out._modified = Math.max(localTs, remoteTs);
+  return out;
+}
+
+function cloudPayload() {
+  // Strip the cloud config (especially token) from data going to remote
+  const payload = structuredClone(state);
+  delete payload.cloud;
+  return payload;
+}
+
+async function cloudPull(opts) {
+  const { silent = false } = opts || {};
+  if (!cloudConfigValid()) return;
+  if (SYNC.pulling) return;
+  SYNC.pulling = true;
+  setSyncStatus('syncing', 'Synchronisation…');
+  try {
+    const remote = await githubGet();
+    if (!remote) {
+      // File doesn't exist yet — create it with current state
+      const newSha = await githubPut(cloudPayload(), null);
+      state.cloud.lastSha = newSha;
+      state.cloud.lastSyncAt = Date.now();
+      saveStateNoSync();
+      setSyncStatus('ok', 'Fichier initial créé sur GitHub');
+      if (!silent) showToast('Fichier initial créé sur GitHub ✓');
+      return;
+    }
+    const merged = mergeStates(state, remote.data);
+    state = merged;
+    state.cloud.lastSha = remote.sha;
+    state.cloud.lastSyncAt = Date.now();
+    saveStateNoSync();
+    // Refresh current view
+    refreshAll();
+    setSyncStatus('ok', `Synchronisé à ${new Date().toLocaleTimeString('fr-FR')}`);
+    if (!silent) showToast('Synchronisé ✓');
+  } catch (e) {
+    SYNC.lastError = e.message;
+    setSyncStatus('error', `Erreur: ${e.message}`);
+    if (!silent) showToast('Erreur de synchro: ' + e.message, true);
+  } finally {
+    SYNC.pulling = false;
+  }
+}
+
+async function cloudPush(opts) {
+  const { silent = false } = opts || {};
+  if (!cloudConfigValid()) return;
+  if (SYNC.pushing) { SYNC.pushPending = true; return; }
+  SYNC.pushing = true;
+  setSyncStatus('syncing', 'Envoi…');
+  try {
+    let sha = state.cloud.lastSha;
+    // Try push
+    try {
+      const newSha = await githubPut(cloudPayload(), sha);
+      state.cloud.lastSha = newSha;
+      state.cloud.lastSyncAt = Date.now();
+      saveStateNoSync();
+      setSyncStatus('ok', `Envoyé à ${new Date().toLocaleTimeString('fr-FR')}`);
+    } catch (e) {
+      if (e.conflict) {
+        // Conflict: pull remote, merge, retry push
+        const remote = await githubGet();
+        if (remote) {
+          const merged = mergeStates(state, remote.data);
+          state = merged;
+          state.cloud.lastSha = remote.sha;
+          saveStateNoSync();
+          const newSha = await githubPut(cloudPayload(), remote.sha);
+          state.cloud.lastSha = newSha;
+          state.cloud.lastSyncAt = Date.now();
+          saveStateNoSync();
+          refreshAll();
+          setSyncStatus('ok', 'Conflit résolu et envoyé');
+          if (!silent) showToast('Conflit fusionné ✓');
+        } else {
+          throw new Error('Fichier introuvable après conflit');
+        }
+      } else {
+        throw e;
+      }
+    }
+  } catch (e) {
+    SYNC.lastError = e.message;
+    setSyncStatus('error', `Erreur: ${e.message}`);
+    if (!silent) showToast('Erreur envoi: ' + e.message, true);
+  } finally {
+    SYNC.pushing = false;
+    if (SYNC.pushPending) {
+      SYNC.pushPending = false;
+      setTimeout(() => cloudPush({ silent: true }), 500);
+    }
+  }
+}
+
+function saveStateNoSync() {
+  // Save without triggering cloud sync (avoid loops during sync itself)
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.error('Erreur save', e);
+  }
+}
+
+function scheduleCloudPush() {
+  if (SYNC.pushTimer) clearTimeout(SYNC.pushTimer);
+  SYNC.pushTimer = setTimeout(() => cloudPush({ silent: true }), 2500);
+}
+
+function startCloudPolling() {
+  if (SYNC.pollTimer) clearInterval(SYNC.pollTimer);
+  if (!cloudConfigValid()) return;
+  SYNC.pollTimer = setInterval(() => {
+    if (!document.hidden) cloudPull({ silent: true });
+  }, 60000); // every 60s when app visible
+}
+
+function refreshAll() {
+  // Re-render everything after a sync pulls new data
+  try {
+    if (typeof renderAspToday === 'function') renderAspToday();
+    if (typeof renderStrToday === 'function') renderStrToday();
+    if (typeof renderAspHistory === 'function') renderAspHistory();
+    if (typeof renderStrHistory === 'function') renderStrHistory();
+    if (typeof renderStrCats === 'function') renderStrCats();
+    if (typeof renderDashboard === 'function') renderDashboard();
+    if (typeof renderSettings === 'function') renderSettings();
+    if (typeof renderTruck === 'function' && document.getElementById('page-truck')?.classList.contains('active')) renderTruck();
+  } catch (e) {
+    console.error('refreshAll error', e);
+  }
+}
+
+// Initialize device ID
+if (!state.cloud) state.cloud = {};
+if (!state.cloud.deviceId) {
+  state.cloud.deviceId = 'dev_' + Math.random().toString(36).slice(2, 10);
+}
+
+function todayStr(d = new Date()) {
+  const yr = d.getFullYear();
+  const mo = String(d.getMonth() + 1).padStart(2, '0');
+  const dy = String(d.getDate()).padStart(2, '0');
+  return `${yr}-${mo}-${dy}`;
+}
+
+function formatDateFr(ymd) {
+  if (!ymd) return '';
+  const [y, m, d] = ymd.split('-');
+  const date = new Date(+y, +m - 1, +d);
+  return date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+}
+
+function formatEuro(v) {
+  return (v || 0).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + ' €';
+}
+function formatKg(v) {
+  return (v || 0).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 1 }) + ' kg';
+}
+
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function uid() {
+  return 'c' + Math.random().toString(36).slice(2, 9);
+}
+
+/* =====================================================================
+   NAVIGATION
+   ===================================================================== */
+
+function switchTab(tabName) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+  const pageMap = {
+    asperges: 'page-asperges',
+    fraises: 'page-fraises',
+    truck: 'page-truck',
+    calc: 'page-calc',
+    dashboard: 'page-dashboard',
+    settings: 'page-settings'
+  };
+  document.getElementById(pageMap[tabName]).classList.add('active');
+  document.querySelector(`.nav-btn[data-tab="${tabName}"]`).classList.add('active');
+
+  // Header
+  const titles = {
+    asperges: 'Asperges',
+    fraises: 'Fraises',
+    truck: 'Camion',
+    calc: 'Calculateur',
+    dashboard: 'Tableau de bord',
+    settings: 'Réglages'
+  };
+  document.getElementById('headerTitle').textContent = titles[tabName];
+
+  // re-render relevant page
+  if (tabName === 'dashboard') renderDashboard();
+  if (tabName === 'calc') updateCalcCategories();
+  if (tabName === 'asperges') renderAspToday();
+  if (tabName === 'fraises') renderStrToday();
+  if (tabName === 'truck') { renderTruck(); bindTruckButtons(); }
+  if (tabName === 'settings') renderSettings();
+
+  window.scrollTo(0, 0);
+}
+
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+});
+
+/* =====================================================================
+   ASPERGES — TODAY
+   ===================================================================== */
+
+let currentField = 'adulte';
+let selectedRows = new Set();
+let currentAspDate = todayStr();
+
+function initAspDate() {
+  const inp = document.getElementById('aspDate');
+  inp.value = currentAspDate;
+  inp.addEventListener('change', (e) => {
+    currentAspDate = e.target.value || todayStr();
+    selectedRows.clear();
+    renderAspToday();
+  });
+}
+
+function getAspDay(date) {
+  if (!state.aspDays[date]) {
+    state.aspDays[date] = { rows: { adulte: [], jeune: [] }, rebuts: { adulte: [], jeune: [] }, products: {} };
+  }
+  // Backward compatibility: ensure rebuts exists for older data
+  if (!state.aspDays[date].rebuts) {
+    state.aspDays[date].rebuts = { adulte: [], jeune: [] };
+  }
+  if (!state.aspDays[date].rebuts.adulte) state.aspDays[date].rebuts.adulte = [];
+  if (!state.aspDays[date].rebuts.jeune) state.aspDays[date].rebuts.jeune = [];
+  return state.aspDays[date];
+}
+
+function getRebutsSet(date, field) {
+  const day = getAspDay(date);
+  return new Set(day.rebuts[field] || []);
+}
+
+function getRowsDoneSet(date, field) {
+  const day = getAspDay(date);
+  const set = new Set();
+  (day.rows[field] || []).forEach(entry => {
+    (entry.rows || []).forEach(r => set.add(r));
+  });
+  return set;
+}
+
+function getDayRowKg(date, field) {
+  // Returns map: rowNumber -> kg of that row (entry.kg split evenly across rows in entry)
+  const day = getAspDay(date);
+  const map = {};
+  (day.rows[field] || []).forEach(entry => {
+    const rows = entry.rows || [];
+    if (!rows.length) return;
+    const perRow = (+entry.kg || 0) / rows.length;
+    rows.forEach(r => { map[r] = (map[r] || 0) + perRow; });
+  });
+  return map;
+}
+
+function getRecentRowDays(currentDate, field, daysBack = 7) {
+  // For each row, find the most recent day (within the last `daysBack` days BEFORE currentDate)
+  // when it was picked. Returns map: rowNumber -> daysAgo (1 = J-1, 2 = J-2, etc.)
+  // currentDate is "YYYY-MM-DD".
+  const result = {};
+  // Parse currentDate as a local date
+  const [y, m, d] = currentDate.split('-').map(Number);
+  const ref = new Date(y, m - 1, d);
+  for (let back = 1; back <= daysBack; back++) {
+    const past = new Date(ref);
+    past.setDate(ref.getDate() - back);
+    const key = `${past.getFullYear()}-${String(past.getMonth()+1).padStart(2,'0')}-${String(past.getDate()).padStart(2,'0')}`;
+    const day = state.aspDays[key];
+    if (!day || !day.rows || !day.rows[field]) continue;
+    day.rows[field].forEach(entry => {
+      (entry.rows || []).forEach(r => {
+        // Only set if not already set (we want the *most recent* past pick)
+        if (result[r] === undefined) result[r] = back;
+      });
+    });
+  }
+  return result;
+}
+
+function renderRowsGrid() {
+  // Map field → SVG aerial view of the asparagus field
+  // Rows run HORIZONTALLY (left to right) — stacked vertically.
+  // This fits well on a phone held in portrait: each row takes the full width.
+  const total = currentField === 'adulte' ? state.config.rowsAdulte : state.config.rowsJeune;
+  const done = getRowsDoneSet(currentAspDate, currentField);
+  const rebuts = getRebutsSet(currentAspDate, currentField);
+  const kgByRow = getDayRowKg(currentAspDate, currentField);
+  const recentDays = getRecentRowDays(currentAspDate, currentField, 7);
+  const container = document.getElementById('fieldView');
+
+  // Dimensions - horizontal rows viewed from above
+  const W = 360;
+  const pad = 8;
+  const gap = 2;
+  // Minimum row height for good touch targets (elderly user, farm use)
+  const rowH = total <= 17 ? 32 : (total <= 25 ? 22 : 16);
+  const H = pad*2 + total * rowH + (total-1) * gap;
+  const rowW = W - pad*2;
+
+  let rowsSvg = '';
+  let labelsSvg = '';
+  let kgSvg = '';
+  let iconsSvg = '';
+
+  // Show row numbers on the left (narrow gutter) and the row bar to the right
+  const gutterW = 26;
+  const rowBarX = pad + gutterW;
+  const rowBarW = W - pad - rowBarX - 4;
+
+  for (let i = 1; i <= total; i++) {
+    const y = pad + (i-1) * (rowH + gap);
+    const isDone = done.has(i);
+    const isRebut = rebuts.has(i) && !isDone; // done takes precedence
+    const isSelected = selectedRows.has(i);
+
+    // Row number in gutter
+    const numColor = '#e8dcc4';
+    labelsSvg += `<text x="${pad + gutterW/2}" y="${y + rowH/2 + 4}" text-anchor="middle" font-size="${Math.min(12, rowH * 0.7)}" font-weight="700" fill="${numColor}" pointer-events="none" style="font-family: -apple-system, sans-serif;">${i}</text>`;
+
+    // Base row color
+    let fill, stroke, strokeW;
+    if (isSelected) {
+      fill = 'url(#rowSelected)';
+      stroke = '#c98a00';
+      strokeW = 2;
+    } else if (isDone) {
+      fill = 'url(#rowDone)';
+      stroke = '#1f4d2c';
+      strokeW = 1;
+    } else if (isRebut) {
+      fill = 'url(#rowRebut)';
+      stroke = '#6e1f1a';
+      strokeW = 1;
+    } else {
+      fill = 'url(#rowFresh)';
+      stroke = '#4a6b3a';
+      strokeW = 1;
+    }
+
+    const rx = Math.min(rowH/2, 4);
+    // Full-width hitzone covers gutter + row bar so easy to tap
+    rowsSvg += `<rect class="hitzone" data-row="${i}" x="${pad}" y="${y}" width="${W - pad*2}" height="${rowH}" rx="${rx}" ry="${rx}" fill="transparent"/>`;
+    // Visible row bar (not interactive, hitzone handles clicks)
+    rowsSvg += `<rect x="${rowBarX}" y="${y}" width="${rowBarW}" height="${rowH}" rx="${rx}" ry="${rx}" fill="${fill}" stroke="${stroke}" stroke-width="${strokeW}" pointer-events="none"/>`;
+
+    // Ridge line (horizontal) in middle of row
+    const midY = y + rowH/2;
+    rowsSvg += `<line x1="${rowBarX + 4}" y1="${midY}" x2="${rowBarX + rowBarW - 4}" y2="${midY}" stroke="${isDone ? '#1a3a22' : '#6d9658'}" stroke-width="0.8" opacity="0.5" pointer-events="none"/>`;
+
+    // Small shoot dots on fresh rows (asparagus tips peeking through)
+    if (!isDone && !isSelected && !isRebut) {
+      const shoots = Math.floor(rowBarW / 20);
+      for (let s = 0; s < shoots; s++) {
+        const sx = rowBarX + 10 + s * (rowBarW / shoots) + ((i * 7) % 8);
+        const sy = midY + ((s + i) % 2 === 0 ? -rowH*0.2 : rowH*0.2);
+        rowsSvg += `<circle cx="${sx}" cy="${sy}" r="${Math.min(1.2, rowH*0.08)}" fill="#c9e5b0" opacity="0.7" pointer-events="none"/>`;
+      }
+    }
+
+    // Icon for done rows (basket) on the right side
+    if (isDone) {
+      iconsSvg += `<text x="${rowBarX + rowBarW - 6}" y="${midY + 5}" text-anchor="end" font-size="${Math.min(16, rowH * 0.85)}" pointer-events="none">🧺</text>`;
+    }
+    // Icon for rebut rows
+    if (isRebut) {
+      iconsSvg += `<text x="${rowBarX + rowBarW - 6}" y="${midY + 5}" text-anchor="end" font-size="${Math.min(16, rowH * 0.9)}" font-weight="700" fill="#fff" pointer-events="none" style="font-family: -apple-system, sans-serif;">✕</text>`;
+    }
+
+    // Kg label on the left portion of the bar (never overlaps icon)
+    const kg = kgByRow[i];
+    if (isDone && kg && kg > 0) {
+      kgSvg += `<text x="${rowBarX + 10}" y="${midY + 4}" text-anchor="start" font-size="${Math.min(12, rowH * 0.55)}" font-weight="700" fill="#ffffff" pointer-events="none" style="font-family: -apple-system, sans-serif;">${kg.toFixed(1)} kg</text>`;
+    }
+
+    // J-X badge: row was picked in the last 7 days but NOT today
+    // Show only when: not done today, not selected, not rebut today
+    if (!isDone && !isSelected && !isRebut && recentDays[i] !== undefined) {
+      const daysAgo = recentDays[i];
+      // Color gradient: J-1 darker, J-7 lighter (faded)
+      const opacity = 1 - (daysAgo - 1) * 0.1;  // J-1 = 1.0, J-7 = 0.4
+      const badgeBg = '#1f4d2c';
+      const badgeFg = '#ffffff';
+      // Position the badge on the right side of the row bar
+      const bw = Math.min(28, rowH * 1.5);
+      const bh = Math.max(10, rowH * 0.6);
+      const bx = rowBarX + rowBarW - bw - 4;
+      const by = midY - bh/2;
+      iconsSvg += `<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="${bh/2}" ry="${bh/2}" fill="${badgeBg}" opacity="${opacity}" pointer-events="none"/>`;
+      iconsSvg += `<text x="${bx + bw/2}" y="${by + bh/2 + 3}" text-anchor="middle" font-size="${Math.min(10, rowH * 0.5)}" font-weight="700" fill="${badgeFg}" opacity="${opacity}" pointer-events="none" style="font-family: -apple-system, sans-serif;">J-${daysAgo}</text>`;
+    }
+  }
+
+  const svg = `
+<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <linearGradient id="rowFresh" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6d9658"/>
+      <stop offset="50%" stop-color="#8fbf72"/>
+      <stop offset="100%" stop-color="#6d9658"/>
+    </linearGradient>
+    <linearGradient id="rowDone" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1f4d2c"/>
+      <stop offset="50%" stop-color="#2d6a3f"/>
+      <stop offset="100%" stop-color="#1f4d2c"/>
+    </linearGradient>
+    <linearGradient id="rowSelected" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f5b800"/>
+      <stop offset="50%" stop-color="#ffd43b"/>
+      <stop offset="100%" stop-color="#f5b800"/>
+    </linearGradient>
+    <linearGradient id="rowRebut" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6e2a24"/>
+      <stop offset="50%" stop-color="#9a3d36"/>
+      <stop offset="100%" stop-color="#6e2a24"/>
+    </linearGradient>
+    <pattern id="soil" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
+      <rect width="24" height="24" fill="#7a5738"/>
+      <circle cx="5" cy="7" r="0.8" fill="#5f4127" opacity="0.5"/>
+      <circle cx="17" cy="13" r="0.6" fill="#8c6640" opacity="0.6"/>
+      <circle cx="11" cy="20" r="0.7" fill="#5f4127" opacity="0.4"/>
+      <circle cx="20" cy="3" r="0.5" fill="#8c6640" opacity="0.5"/>
+      <circle cx="2" cy="16" r="0.6" fill="#5f4127" opacity="0.5"/>
+    </pattern>
+  </defs>
+  <rect width="${W}" height="${H}" fill="url(#soil)"/>
+  ${rowsSvg}
+  ${iconsSvg}
+  ${kgSvg}
+  ${labelsSvg}
+</svg>`;
+
+  container.innerHTML = svg;
+
+  container.querySelectorAll('.hitzone').forEach(rect => {
+    rect.addEventListener('click', () => {
+      const i = parseInt(rect.dataset.row, 10);
+      if (selectedRows.has(i)) selectedRows.delete(i);
+      else selectedRows.add(i);
+      renderRowsGrid();
+      updateRowsInfo();
+    });
+  });
+
+  document.getElementById('rowsTotal').textContent = total;
+  document.getElementById('rowsDone').textContent = done.size;
+  const rebutEl = document.getElementById('rowsRebut');
+  if (rebutEl) rebutEl.textContent = rebuts.size;
+  updateRowsInfo();
+}
+
+function updateRowsInfo() {
+  document.getElementById('rowsSelected').textContent = selectedRows.size;
+}
+
+function renderProductLines() {
+  const container = document.getElementById('productLines');
+  container.innerHTML = '';
+  const day = getAspDay(currentAspDate);
+  state.products.forEach(p => {
+    const stored = day.products[p.id] || { kg: '', price: p.price };
+    // Keep the product's default price in sync with config
+    const line = document.createElement('div');
+    line.className = 'product-line';
+    line.innerHTML = `
+      <div class="name">${p.name}</div>
+      <div class="qty-input"><input type="number" step="0.1" inputmode="decimal" data-pid="${p.id}" data-role="kg" value="${stored.kg ?? ''}" placeholder="0"></div>
+      <div class="price-input"><input type="number" step="0.1" inputmode="decimal" data-pid="${p.id}" data-role="price" value="${stored.price ?? p.price}" placeholder="${p.price}"></div>
+      <span style="width:36px"></span>
+    `;
+    container.appendChild(line);
+  });
+  attachProductListeners();
+  updateAspTotals();
+}
+
+function attachProductListeners() {
+  document.querySelectorAll('#productLines input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const pid = inp.dataset.pid;
+      const role = inp.dataset.role;
+      const val = parseFloat(inp.value);
+      const day = getAspDay(currentAspDate);
+      if (!day.products[pid]) {
+        const master = state.products.find(x => x.id === pid);
+        day.products[pid] = { kg: 0, price: master ? master.price : 0 };
+      }
+      if (role === 'kg') day.products[pid].kg = isNaN(val) ? 0 : val;
+      if (role === 'price') {
+        day.products[pid].price = isNaN(val) ? 0 : val;
+        // Also update master product price
+        const masterProd = state.products.find(x => x.id === pid);
+        if (masterProd) masterProd.price = isNaN(val) ? 0 : val;
+      }
+      touchDay('asp', currentAspDate);
+      saveState();
+      updateAspTotals();
+    });
+  });
+}
+
+function updateAspTotals() {
+  const day = getAspDay(currentAspDate);
+  let kg = 0, ca = 0;
+  Object.values(day.products).forEach(p => {
+    const k = +p.kg || 0;
+    const pr = +p.price || 0;
+    kg += k;
+    ca += k * pr;
+  });
+  document.getElementById('totalKgToday').textContent = formatKg(kg);
+  document.getElementById('totalCaToday').textContent = formatEuro(ca);
+}
+
+function renderDayPickers() {
+  const day = getAspDay(currentAspDate);
+  const list = document.getElementById('dayPickersList');
+  const entries = [];
+  ['adulte', 'jeune'].forEach(f => {
+    (day.rows[f] || []).forEach((e, idx) => {
+      entries.push({ field: f, fieldIdx: idx, ...e });
+    });
+  });
+  if (!entries.length) {
+    list.innerHTML = '<div class="empty-state"><div class="emoji">👥</div>Aucun rang saisi pour ce jour</div>';
+    return;
+  }
+  list.innerHTML = '';
+  entries.forEach((e) => {
+    const div = document.createElement('div');
+    div.className = 'picker-row';
+    const ranksStr = (e.rows || []).join(', ');
+    div.innerHTML = `
+      <div class="rank">${e.field === 'adulte' ? 'A' : 'J'}</div>
+      <div class="name">${e.picker || '(sans nom)'}<br><span style="font-weight:normal;font-size:12px;color:var(--text-muted);">Rangs ${ranksStr}</span></div>
+      <div class="kg">${(+e.kg || 0).toLocaleString('fr-FR')} kg</div>
+      <button class="btn small danger" style="margin-left:8px;padding:6px 10px;min-height:0;width:auto;" data-field="${e.field}" data-fidx="${e.fieldIdx}">✕</button>
+    `;
+    list.appendChild(div);
+  });
+  // Attach delete - use field + field-specific index (much cleaner)
+  list.querySelectorAll('button[data-field]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!confirm('Supprimer cette entrée ?')) return;
+      const field = btn.dataset.field;
+      const idx = parseInt(btn.dataset.fidx);
+      const day = getAspDay(currentAspDate);
+      if (day.rows[field] && day.rows[field][idx] !== undefined) {
+        day.rows[field].splice(idx, 1);
+        touchDay('asp', currentAspDate);
+        saveState();
+        renderRowsGrid();
+        renderDayPickers();
+        showToast('Entrée supprimée');
+      }
+    });
+  });
+}
+
+function renderAspToday() {
+  renderRowsGrid();
+  renderProductLines();
+  renderDayPickers();
+  const dateEl = document.getElementById('headerDate');
+  dateEl.textContent = formatDateFr(currentAspDate);
+}
+
+// Field toggle
+document.querySelectorAll('#fieldToggle button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#fieldToggle button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentField = btn.dataset.field;
+    selectedRows.clear();
+    renderRowsGrid();
+  });
+});
+
+// Select all
+document.getElementById('selectAllBtn').addEventListener('click', () => {
+  const total = currentField === 'adulte' ? state.config.rowsAdulte : state.config.rowsJeune;
+  const done = getRowsDoneSet(currentAspDate, currentField);
+  if (selectedRows.size === total - done.size) {
+    selectedRows.clear();
+  } else {
+    selectedRows.clear();
+    for (let i = 1; i <= total; i++) {
+      if (!done.has(i)) selectedRows.add(i);
+    }
+  }
+  renderRowsGrid();
+});
+
+// Save rows
+document.getElementById('saveRowsBtn').addEventListener('click', () => {
+  if (!selectedRows.size) {
+    showToast('Sélectionnez au moins un rang', true);
+    return;
+  }
+  const kg = parseFloat(document.getElementById('selKg').value);
+  if (isNaN(kg) || kg < 0) {
+    showToast('Entrez un poids valide', true);
+    return;
+  }
+  const picker = document.getElementById('selPicker').value.trim();
+
+  const day = getAspDay(currentAspDate);
+  if (!day.rows[currentField]) day.rows[currentField] = [];
+  const savedCount = selectedRows.size;
+  day.rows[currentField].push({
+    rows: Array.from(selectedRows).sort((a, b) => a - b),
+    kg: kg,
+    picker: picker
+  });
+  // If any of these rows were marked as rebut, remove them from rebuts (cueilli takes precedence)
+  day.rebuts[currentField] = (day.rebuts[currentField] || []).filter(r => !selectedRows.has(r));
+  touchDay('asp', currentAspDate);
+  saveState();
+  selectedRows.clear();
+  document.getElementById('selKg').value = '';
+  document.getElementById('selPicker').value = '';
+  renderRowsGrid();
+  renderDayPickers();
+  showToast(`${savedCount} rang(s) enregistrés ✓`);
+});
+
+document.getElementById('rebutRowsBtn').addEventListener('click', () => {
+  if (!selectedRows.size) {
+    showToast('Sélectionnez au moins un rang', true);
+    return;
+  }
+  const day = getAspDay(currentAspDate);
+  if (!day.rebuts[currentField]) day.rebuts[currentField] = [];
+  // Check if rows are already cueillis - if so, don't allow rebut
+  const doneSet = getRowsDoneSet(currentAspDate, currentField);
+  const alreadyDone = Array.from(selectedRows).filter(r => doneSet.has(r));
+  if (alreadyDone.length) {
+    showToast(`Rang ${alreadyDone.join(', ')} déjà cueilli, pas rebutable`, true);
+    return;
+  }
+  const rebutSet = new Set(day.rebuts[currentField]);
+  let addedCount = 0, removedCount = 0;
+  selectedRows.forEach(r => {
+    if (rebutSet.has(r)) {
+      rebutSet.delete(r);
+      removedCount++;
+    } else {
+      rebutSet.add(r);
+      addedCount++;
+    }
+  });
+  day.rebuts[currentField] = Array.from(rebutSet).sort((a, b) => a - b);
+  touchDay('asp', currentAspDate);
+  saveState();
+  selectedRows.clear();
+  renderRowsGrid();
+  if (addedCount && removedCount) {
+    showToast(`${addedCount} rebuté(s), ${removedCount} annulé(s)`);
+  } else if (addedCount) {
+    showToast(`${addedCount} rang(s) rebuté(s) ✕`);
+  } else {
+    showToast(`${removedCount} rebut(s) annulé(s)`);
+  }
+});
+
+// Subtabs asp
+document.querySelectorAll('#aspSubtabs button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#aspSubtabs button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    const sub = b.dataset.sub;
+    document.getElementById('asp-today').style.display = sub === 'today' ? '' : 'none';
+    document.getElementById('asp-history').style.display = sub === 'history' ? '' : 'none';
+    if (sub === 'history') renderAspHistory();
+  });
+});
+
+// Save production button (just a visual confirmation, data is auto-saved)
+document.getElementById('saveProductBtn').addEventListener('click', () => {
+  saveState();
+  showToast('Production enregistrée ✓');
+});
+
+function renderAspHistory() {
+  const list = document.getElementById('aspHistoryList');
+  const dates = Object.keys(state.aspDays).sort().reverse();
+  if (!dates.length) {
+    list.innerHTML = '<div class="empty-state"><div class="emoji">📅</div>Aucune journée enregistrée</div>';
+    return;
+  }
+  list.innerHTML = '';
+  dates.forEach(d => {
+    const day = state.aspDays[d];
+    let kg = 0, ca = 0;
+    Object.values(day.products || {}).forEach(p => {
+      kg += +p.kg || 0;
+      ca += (+p.kg || 0) * (+p.price || 0);
+    });
+    const rowsTotal = (day.rows.adulte || []).reduce((s, e) => s + (e.rows || []).length, 0)
+                    + (day.rows.jeune || []).reduce((s, e) => s + (e.rows || []).length, 0);
+
+    const div = document.createElement('div');
+    div.className = 'history-item';
+    div.innerHTML = `
+      <div>
+        <div class="date">${formatDateFr(d)}</div>
+        <div class="meta">${formatKg(kg)} · ${rowsTotal} rang(s)</div>
+      </div>
+      <div class="amount">${formatEuro(ca)}</div>
+    `;
+    div.addEventListener('click', () => {
+      currentAspDate = d;
+      document.getElementById('aspDate').value = d;
+      document.querySelector('#aspSubtabs button[data-sub="today"]').click();
+      renderAspToday();
+    });
+    list.appendChild(div);
+  });
+}
+
+/* =====================================================================
+   FRAISES — TODAY & CATEGORIES
+   ===================================================================== */
+
+let currentStrDate = todayStr();
+
+function initStrDate() {
+  const inp = document.getElementById('strDate');
+  inp.value = currentStrDate;
+  inp.addEventListener('change', (e) => {
+    currentStrDate = e.target.value || todayStr();
+    renderStrToday();
+  });
+}
+
+function getStrDay(date) {
+  if (!state.strDays[date]) state.strDays[date] = { items: {} };
+  return state.strDays[date];
+}
+
+function renderStrProductLines() {
+  const container = document.getElementById('strProductLines');
+  container.innerHTML = '';
+  if (!state.strCategories.length) {
+    container.innerHTML = '<div class="empty-state"><div class="emoji">🍓</div>Créez d\'abord des variétés dans l\'onglet "Variétés"</div>';
+    return;
+  }
+  const day = getStrDay(currentStrDate);
+  state.strCategories.forEach(c => {
+    const stored = day.items[c.id] || { kgAchat: '', priceAchat: c.priceAchat, kgVente: '', priceVente: c.priceVente };
+    const line = document.createElement('div');
+    line.className = 'str-variety-card';
+    line.innerHTML = `
+      <div class="str-variety-name">${c.name}</div>
+      <div class="str-line-group">
+        <div class="str-line-label">⬇️ Achat</div>
+        <div class="str-qty-price">
+          <div>
+            <label class="str-mini-label">Kg</label>
+            <input type="number" step="0.1" inputmode="decimal" data-cid="${c.id}" data-role="kgAchat" value="${stored.kgAchat ?? ''}" placeholder="0">
+          </div>
+          <div>
+            <label class="str-mini-label">€/kg</label>
+            <input type="number" step="0.1" inputmode="decimal" data-cid="${c.id}" data-role="priceAchat" value="${stored.priceAchat ?? c.priceAchat}" placeholder="${c.priceAchat}">
+          </div>
+        </div>
+      </div>
+      <div class="str-line-group">
+        <div class="str-line-label">⬆️ Vente</div>
+        <div class="str-qty-price">
+          <div>
+            <label class="str-mini-label">Kg</label>
+            <input type="number" step="0.1" inputmode="decimal" data-cid="${c.id}" data-role="kgVente" value="${stored.kgVente ?? ''}" placeholder="0">
+          </div>
+          <div>
+            <label class="str-mini-label">€/kg</label>
+            <input type="number" step="0.1" inputmode="decimal" data-cid="${c.id}" data-role="priceVente" value="${stored.priceVente ?? c.priceVente}" placeholder="${c.priceVente}">
+          </div>
+        </div>
+      </div>
+      <div class="str-line-summary" data-summary-cid="${c.id}">
+        <span class="str-summary-kg">0 kg manquant</span>
+        <span class="str-summary-marge">Marge : 0 €</span>
+      </div>
+    `;
+    container.appendChild(line);
+  });
+  document.querySelectorAll('#strProductLines input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const cid = inp.dataset.cid;
+      const role = inp.dataset.role;
+      const val = parseFloat(inp.value);
+      const day = getStrDay(currentStrDate);
+      if (!day.items[cid]) {
+        const master = state.strCategories.find(x => x.id === cid);
+        day.items[cid] = {
+          kgAchat: 0,
+          priceAchat: master ? master.priceAchat : 0,
+          kgVente: 0,
+          priceVente: master ? master.priceVente : 0
+        };
+      }
+      const v = isNaN(val) ? 0 : val;
+      day.items[cid][role] = v;
+      // Sync master defaults when prices change
+      if (role === 'priceAchat' || role === 'priceVente') {
+        const master = state.strCategories.find(x => x.id === cid);
+        if (master) master[role] = v;
+      }
+      touchDay('str', currentStrDate);
+      saveState();
+      updateStrLineSummary(cid);
+      updateStrTotals();
+    });
+  });
+  // Initial summary render
+  state.strCategories.forEach(c => updateStrLineSummary(c.id));
+  updateStrTotals();
+}
+
+function updateStrLineSummary(cid) {
+  const day = getStrDay(currentStrDate);
+  const it = day.items[cid] || {};
+  const kgA = +it.kgAchat || 0;
+  const pA = +it.priceAchat || 0;
+  const kgV = +it.kgVente || 0;
+  const pV = +it.priceVente || 0;
+  const manquant = kgA - kgV;
+  const marge = (kgV * pV) - (kgA * pA);
+  const el = document.querySelector(`[data-summary-cid="${cid}"]`);
+  if (!el) return;
+  const kgEl = el.querySelector('.str-summary-kg');
+  const margeEl = el.querySelector('.str-summary-marge');
+  if (kgA === 0 && kgV === 0) {
+    kgEl.textContent = '—';
+    margeEl.textContent = '—';
+    margeEl.style.color = '';
+  } else {
+    if (manquant > 0) {
+      kgEl.innerHTML = `<b style="color:#c47b2e;">${manquant.toFixed(1).replace('.', ',')} kg manquant</b>`;
+    } else if (manquant < 0) {
+      kgEl.innerHTML = `<b style="color:#c47b2e;">+${(-manquant).toFixed(1).replace('.', ',')} kg en trop</b>`;
+    } else {
+      kgEl.innerHTML = `<span style="color:#4caf50;">✓ tout vendu</span>`;
+    }
+    margeEl.innerHTML = `Marge : <b style="color:${marge >= 0 ? 'var(--str-primary-dark)' : '#b8312a'};">${marge >= 0 ? '' : ''}${marge.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} €</b>`;
+  }
+}
+
+function updateStrTotals() {
+  const day = getStrDay(currentStrDate);
+  let kgAchat = 0, kgVente = 0, coutAchat = 0, caVente = 0;
+  Object.values(day.items).forEach(p => {
+    kgAchat += +p.kgAchat || 0;
+    kgVente += +p.kgVente || 0;
+    coutAchat += (+p.kgAchat || 0) * (+p.priceAchat || 0);
+    caVente += (+p.kgVente || 0) * (+p.priceVente || 0);
+  });
+  const manquant = kgAchat - kgVente;
+  const marge = caVente - coutAchat;
+  document.getElementById('strTotalKgAchat').textContent = formatKg(kgAchat);
+  document.getElementById('strTotalKgVente').textContent = formatKg(kgVente);
+  const manqEl = document.getElementById('strTotalKgManquant');
+  if (manquant > 0) {
+    manqEl.textContent = formatKg(manquant);
+    manqEl.style.color = '#c47b2e';
+  } else if (manquant < 0) {
+    manqEl.textContent = '+' + formatKg(-manquant);
+    manqEl.style.color = '#c47b2e';
+  } else {
+    manqEl.textContent = '0 kg';
+    manqEl.style.color = 'var(--text-subtle)';
+  }
+  document.getElementById('strCoutAchat').textContent = formatEuro(coutAchat);
+  document.getElementById('strTotalCaToday').textContent = formatEuro(caVente);
+  const margeEl = document.getElementById('strMarge');
+  margeEl.textContent = formatEuro(marge);
+  margeEl.style.color = marge >= 0 ? 'var(--str-primary-dark)' : '#b8312a';
+}
+
+function renderStrCats() {
+  const container = document.getElementById('strCatsList');
+  container.innerHTML = '';
+  if (!state.strCategories.length) {
+    container.innerHTML = '<div class="empty-state"><div class="emoji">🍓</div>Aucune variété créée</div>';
+    return;
+  }
+  state.strCategories.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'cat-card';
+    div.innerHTML = `
+      <div>
+        <div class="cat-name">${c.name}</div>
+        <div class="cat-meta">Achat : ${(+c.priceAchat || 0).toLocaleString('fr-FR')} €/kg · Vente : ${(+c.priceVente || 0).toLocaleString('fr-FR')} €/kg</div>
+      </div>
+      <div class="cat-right" style="display:flex;gap:6px;">
+        <button class="btn small secondary" data-edit="${c.id}" style="min-height:40px;">✏️</button>
+        <button class="btn small danger" data-del="${c.id}" style="min-height:40px;">✕</button>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+  container.querySelectorAll('[data-edit]').forEach(b => {
+    b.addEventListener('click', () => openCatModal(b.dataset.edit));
+  });
+  container.querySelectorAll('[data-del]').forEach(b => {
+    b.addEventListener('click', () => {
+      if (!confirm('Supprimer cette variété ? Les données passées sont conservées.')) return;
+      state.strCategories = state.strCategories.filter(c => c.id !== b.dataset.del);
+      saveState();
+      renderStrCats();
+      renderStrProductLines();
+      updateCalcCategories();
+      showToast('Variété supprimée');
+    });
+  });
+}
+
+function openCatModal(id = null) {
+  const cat = id ? state.strCategories.find(c => c.id === id) : null;
+  showModal(id ? 'Modifier la variété' : 'Nouvelle variété', `
+    <div class="field">
+      <label>Nom de la variété</label>
+      <input type="text" id="newCatName" value="${cat?.name || ''}" placeholder="Ex: Gariguette">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Prix d'achat habituel (€/kg)</label>
+        <input type="number" step="0.1" inputmode="decimal" id="newCatPriceAchat" value="${cat?.priceAchat ?? ''}" placeholder="3.50">
+      </div>
+      <div class="field">
+        <label>Prix de vente habituel (€/kg)</label>
+        <input type="number" step="0.1" inputmode="decimal" id="newCatPriceVente" value="${cat?.priceVente ?? ''}" placeholder="5.50">
+      </div>
+    </div>
+    <button class="btn str" id="saveCatBtn">${id ? 'Enregistrer' : 'Créer'}</button>
+    <button class="btn secondary" id="cancelCatBtn" style="margin-top:8px;">Annuler</button>
+  `);
+  document.getElementById('cancelCatBtn').addEventListener('click', closeModal);
+  document.getElementById('saveCatBtn').addEventListener('click', () => {
+    const name = document.getElementById('newCatName').value.trim();
+    const priceAchat = parseFloat(document.getElementById('newCatPriceAchat').value);
+    const priceVente = parseFloat(document.getElementById('newCatPriceVente').value);
+    if (!name) { showToast('Entrez un nom', true); return; }
+    if (isNaN(priceAchat) || priceAchat < 0) { showToast('Prix d\'achat invalide', true); return; }
+    if (isNaN(priceVente) || priceVente < 0) { showToast('Prix de vente invalide', true); return; }
+    if (id) {
+      cat.name = name;
+      cat.priceAchat = priceAchat;
+      cat.priceVente = priceVente;
+    } else {
+      state.strCategories.push({ id: uid(), name, priceAchat, priceVente });
+    }
+    saveState();
+    closeModal();
+    renderStrCats();
+    renderStrProductLines();
+    updateCalcCategories();
+    showToast(id ? 'Variété modifiée' : 'Variété ajoutée');
+  });
+}
+
+document.getElementById('addStrCatBtn').addEventListener('click', () => openCatModal());
+
+// Subtabs str
+document.querySelectorAll('#strSubtabs button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#strSubtabs button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    const sub = b.dataset.sub;
+    document.getElementById('str-today').style.display = sub === 'today' ? '' : 'none';
+    document.getElementById('str-cats').style.display = sub === 'cats' ? '' : 'none';
+    document.getElementById('str-history').style.display = sub === 'history' ? '' : 'none';
+    if (sub === 'cats') renderStrCats();
+    if (sub === 'history') renderStrHistory();
+  });
+});
+
+document.getElementById('strSaveProductBtn').addEventListener('click', () => {
+  touchDay('str', currentStrDate);
+  saveState();
+  showToast('Journée enregistrée ✓');
+});
+
+function computeStrDayTotals(day) {
+  let kgAchat = 0, kgVente = 0, coutAchat = 0, caVente = 0;
+  Object.values(day.items || {}).forEach(p => {
+    kgAchat += +p.kgAchat || 0;
+    kgVente += +p.kgVente || 0;
+    coutAchat += (+p.kgAchat || 0) * (+p.priceAchat || 0);
+    caVente += (+p.kgVente || 0) * (+p.priceVente || 0);
+  });
+  return { kgAchat, kgVente, coutAchat, caVente, marge: caVente - coutAchat, manquant: kgAchat - kgVente };
+}
+
+function renderStrHistory() {
+  const list = document.getElementById('strHistoryList');
+  const dates = Object.keys(state.strDays).sort().reverse();
+  const validDates = dates.filter(d => {
+    const day = state.strDays[d];
+    return Object.values(day.items || {}).some(p => (+p.kgAchat || 0) > 0 || (+p.kgVente || 0) > 0);
+  });
+  if (!validDates.length) {
+    list.innerHTML = '<div class="empty-state"><div class="emoji">📅</div>Aucune journée enregistrée</div>';
+    return;
+  }
+  list.innerHTML = '';
+  validDates.forEach(d => {
+    const day = state.strDays[d];
+    const t = computeStrDayTotals(day);
+    const div = document.createElement('div');
+    div.className = 'history-item';
+    const margeColor = t.marge >= 0 ? 'var(--str-primary-dark)' : '#b8312a';
+    div.innerHTML = `
+      <div>
+        <div class="date">${formatDateFr(d)}</div>
+        <div class="meta">Achat ${formatKg(t.kgAchat)} · Vendu ${formatKg(t.kgVente)}</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="amount" style="color:${margeColor};">${formatEuro(t.marge)}</div>
+        <div style="font-size:11px; color:var(--text-muted);">marge</div>
+      </div>
+    `;
+    div.addEventListener('click', () => {
+      currentStrDate = d;
+      document.getElementById('strDate').value = d;
+      document.querySelector('#strSubtabs button[data-sub="today"]').click();
+      renderStrToday();
+    });
+    list.appendChild(div);
+  });
+}
+
+function renderStrToday() {
+  renderStrProductLines();
+  document.getElementById('headerDate').textContent = formatDateFr(currentStrDate);
+}
+
+/* =====================================================================
+   CALCULATEUR
+   ===================================================================== */
+
+let calcMode = 'asp';
+
+function updateCalcCategories() {
+  if (calcMode === 'asp') {
+    const sel = document.getElementById('calcCategory');
+    sel.innerHTML = '';
+    state.products.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = item.id;
+      opt.textContent = `${item.name} (${(+item.price || 0).toLocaleString('fr-FR')} €/kg)`;
+      sel.appendChild(opt);
+    });
+    if (state.products.length) {
+      const first = state.products[0];
+      const slider = document.getElementById('calcPriceSlider');
+      const maxPrice = Math.max(30, (+first.price || 5) * 2);
+      slider.max = maxPrice;
+      slider.value = first.price || 5;
+      document.getElementById('calcPriceMax').textContent = maxPrice + ' €';
+    }
+    updateCalcDisplay();
+  } else {
+    // str: strawberry margin simulator
+    const sel = document.getElementById('calcStrCategory');
+    sel.innerHTML = '';
+    if (!state.strCategories.length) {
+      const opt = document.createElement('option');
+      opt.textContent = '(Aucune variété — créez-en dans Fraises)';
+      sel.appendChild(opt);
+    } else {
+      state.strCategories.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item.id;
+        opt.textContent = `${item.name} (A:${(+item.priceAchat||0).toLocaleString('fr-FR')} · V:${(+item.priceVente||0).toLocaleString('fr-FR')} €)`;
+        sel.appendChild(opt);
+      });
+      const first = state.strCategories[0];
+      const achatSlider = document.getElementById('calcStrAchatSlider');
+      const venteSlider = document.getElementById('calcStrVenteSlider');
+      const maxPriceA = Math.max(20, (+first.priceAchat || 3) * 2);
+      const maxPriceV = Math.max(20, (+first.priceVente || 5) * 2);
+      achatSlider.max = maxPriceA;
+      venteSlider.max = maxPriceV;
+      achatSlider.value = first.priceAchat || 3;
+      venteSlider.value = first.priceVente || 5;
+      document.getElementById('calcStrAchatMax').textContent = maxPriceA + ' €';
+      document.getElementById('calcStrVenteMax').textContent = maxPriceV + ' €';
+    }
+    updateCalcStrDisplay();
+  }
+}
+
+document.querySelectorAll('#calcModeTabs button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#calcModeTabs button').forEach(x => x.classList.remove('active', 'str'));
+    b.classList.add('active');
+    calcMode = b.dataset.mode;
+    if (calcMode === 'str') b.classList.add('str');
+    // Show/hide appropriate card
+    document.getElementById('calcAspCard').style.display = calcMode === 'asp' ? '' : 'none';
+    document.getElementById('calcStrCard').style.display = calcMode === 'str' ? '' : 'none';
+    updateCalcCategories();
+  });
+});
+
+document.getElementById('calcCategory').addEventListener('change', (e) => {
+  const item = state.products.find(i => i.id === e.target.value);
+  if (item) {
+    const slider = document.getElementById('calcPriceSlider');
+    slider.value = item.price;
+  }
+  updateCalcDisplay();
+});
+
+document.getElementById('calcStrCategory').addEventListener('change', (e) => {
+  const item = state.strCategories.find(i => i.id === e.target.value);
+  if (item) {
+    document.getElementById('calcStrAchatSlider').value = item.priceAchat;
+    document.getElementById('calcStrVenteSlider').value = item.priceVente;
+  }
+  updateCalcStrDisplay();
+});
+
+document.getElementById('calcPriceSlider').addEventListener('input', updateCalcDisplay);
+document.getElementById('calcQty').addEventListener('input', updateCalcDisplay);
+document.getElementById('calcStrAchatSlider').addEventListener('input', updateCalcStrDisplay);
+document.getElementById('calcStrVenteSlider').addEventListener('input', updateCalcStrDisplay);
+document.getElementById('calcStrQty').addEventListener('input', updateCalcStrDisplay);
+
+function updateCalcDisplay() {
+  const price = parseFloat(document.getElementById('calcPriceSlider').value) || 0;
+  const qty = parseFloat(document.getElementById('calcQty').value) || 0;
+  document.getElementById('calcPriceDisplay').textContent = price.toLocaleString('fr-FR', {minimumFractionDigits:1,maximumFractionDigits:2}) + ' €/kg';
+  document.getElementById('calcResultValue').textContent = formatEuro(price * qty);
+}
+
+function updateCalcStrDisplay() {
+  const achat = parseFloat(document.getElementById('calcStrAchatSlider').value) || 0;
+  const vente = parseFloat(document.getElementById('calcStrVenteSlider').value) || 0;
+  const qty = parseFloat(document.getElementById('calcStrQty').value) || 0;
+  document.getElementById('calcStrAchatDisplay').textContent = achat.toLocaleString('fr-FR', {minimumFractionDigits:1,maximumFractionDigits:2}) + ' €/kg';
+  document.getElementById('calcStrVenteDisplay').textContent = vente.toLocaleString('fr-FR', {minimumFractionDigits:1,maximumFractionDigits:2}) + ' €/kg';
+  const coutAchat = achat * qty;
+  const caVente = vente * qty;
+  const marge = caVente - coutAchat;
+  document.getElementById('calcStrAchat').textContent = formatEuro(coutAchat);
+  document.getElementById('calcStrVente').textContent = formatEuro(caVente);
+  document.getElementById('calcStrResultValue').textContent = formatEuro(marge);
+  document.getElementById('calcStrMargePercent').textContent = (caVente > 0 ? (marge / caVente * 100).toFixed(1) : '0') + ' %';
+  // Color margin result based on positive/negative
+  const resEl = document.getElementById('calcStrResult');
+  if (marge < 0) {
+    resEl.style.background = '#f5e6e5';
+    resEl.style.color = '#8a2320';
+  } else {
+    resEl.style.background = '';
+    resEl.style.color = '';
+  }
+}
+
+/* =====================================================================
+   DASHBOARD
+   ===================================================================== */
+
+let dashMode = 'all';
+
+document.querySelectorAll('#dashSubtabs button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#dashSubtabs button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    dashMode = b.dataset.sub;
+    renderDashboard();
+  });
+});
+
+function computeDayTotals(day, type) {
+  let kg = 0, ca = 0;
+  if (type === 'asp') {
+    Object.values(day.products || {}).forEach(p => {
+      kg += +p.kg || 0;
+      ca += (+p.kg || 0) * (+p.price || 0);
+    });
+    return { kg, ca };
+  } else {
+    // Fraises: buy-resell mode. "kg" = kg vendus, "ca" = marge brute (vente - achat)
+    let kgAchat = 0, kgVente = 0, coutAchat = 0, caVente = 0;
+    Object.values(day.items || {}).forEach(p => {
+      kgAchat += +p.kgAchat || 0;
+      kgVente += +p.kgVente || 0;
+      coutAchat += (+p.kgAchat || 0) * (+p.priceAchat || 0);
+      caVente += (+p.kgVente || 0) * (+p.priceVente || 0);
+    });
+    return {
+      kg: kgVente,            // "kg" représente les kg vendus pour les graphiques
+      ca: caVente - coutAchat, // "ca" représente la marge brute pour les fraises
+      kgAchat, kgVente, coutAchat, caVente,
+      marge: caVente - coutAchat
+    };
+  }
+}
+
+function getAllDays(mode) {
+  const all = [];
+  if (mode === 'all' || mode === 'asp') {
+    Object.entries(state.aspDays).forEach(([d, day]) => {
+      const t = computeDayTotals(day, 'asp');
+      if (t.kg > 0 || t.ca > 0) all.push({ date: d, type: 'asp', ...t, day });
+    });
+  }
+  if (mode === 'all' || mode === 'str') {
+    Object.entries(state.strDays).forEach(([d, day]) => {
+      const t = computeDayTotals(day, 'str');
+      if (t.kg > 0 || t.ca > 0) all.push({ date: d, type: 'str', ...t, day });
+    });
+  }
+  return all.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function getAggregatedByDate(days) {
+  const map = {};
+  days.forEach(d => {
+    if (!map[d.date]) map[d.date] = { date: d.date, kg: 0, ca: 0, asp: { kg: 0, ca: 0 }, str: { kg: 0, ca: 0 } };
+    map[d.date].kg += d.kg;
+    map[d.date].ca += d.ca;
+    map[d.date][d.type].kg += d.kg;
+    map[d.date][d.type].ca += d.ca;
+  });
+  return Object.values(map).sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function renderDashboard() {
+  const container = document.getElementById('dashContent');
+  const days = getAllDays(dashMode);
+  const agg = getAggregatedByDate(days);
+
+  if (!days.length) {
+    container.innerHTML = '<div class="empty-state"><div class="emoji">📊</div><p>Aucune donnée pour cette vue.<br>Commencez à saisir vos récoltes !</p></div>';
+    return;
+  }
+
+  let html = '';
+
+  // Totals
+  const totalKg = days.reduce((s, d) => s + d.kg, 0);
+  const totalCa = days.reduce((s, d) => s + d.ca, 0);
+  const avgCa = totalCa / agg.length;
+  const bestDay = agg.slice().sort((a, b) => b.ca - a.ca)[0];
+
+  // For fraises: "ca" = marge. Labels adjusted.
+  const isStr = dashMode === 'str';
+  const isAll = dashMode === 'all';
+  const moneyLabel = isStr ? 'Marge' : 'CA';
+  const moneyLabelLong = isStr ? 'Marge cumulée saison' : 'CA cumulé saison';
+  const kgLabel = isStr ? 'kg vendus' : 'récoltés';
+
+  const heroGradient = isStr
+    ? 'background:linear-gradient(135deg, var(--str-primary) 0%, var(--str-primary-dark) 100%);'
+    : '';
+
+  html += `
+    <div class="hero-stat" style="${heroGradient}">
+      <div class="label">${moneyLabelLong}</div>
+      <div class="value">${formatEuro(totalCa)}</div>
+      <div class="sub">${formatKg(totalKg)} ${kgLabel} · ${agg.length} jour(s)</div>
+      <div class="mini-chips">
+        <span class="chip">Moy/jour : ${formatEuro(avgCa)}</span>
+        ${bestDay ? `<span class="chip">Meilleur : ${formatEuro(bestDay.ca)}</span>` : ''}
+      </div>
+    </div>
+  `;
+
+  // Extra stats for fraises: show purchase cost + sales revenue
+  if (isStr) {
+    let totalAchat = 0, totalVente = 0, totalKgAchat = 0;
+    days.forEach(d => {
+      totalAchat += d.coutAchat || 0;
+      totalVente += d.caVente || 0;
+      totalKgAchat += d.kgAchat || 0;
+    });
+    html += `
+      <div class="stats-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+        <div class="stat-card">
+          <div class="stat-label">Achat</div>
+          <div class="stat-value" style="color:var(--text-muted); font-size:20px;">${formatEuro(totalAchat)}</div>
+          <div class="stat-sub">${formatKg(totalKgAchat)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Vente</div>
+          <div class="stat-value str" style="font-size:20px;">${formatEuro(totalVente)}</div>
+          <div class="stat-sub">${formatKg(totalKg)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Marge %</div>
+          <div class="stat-value str" style="font-size:20px;">${totalVente > 0 ? ((totalCa / totalVente) * 100).toFixed(1) : '0'}%</div>
+          <div class="stat-sub">sur vente</div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Stats cards
+  html += `
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Kilos</div>
+        <div class="stat-value ${isStr ? 'str' : 'asp'}">${totalKg.toLocaleString('fr-FR', {maximumFractionDigits:0})} kg</div>
+        <div class="stat-sub">${isStr ? 'vendus' : 'total saison'}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">${isStr ? 'Marge' : 'Prix'} moyen</div>
+        <div class="stat-value ${isStr ? 'str' : 'asp'}">${totalKg ? (totalCa/totalKg).toFixed(2) : '0'} €</div>
+        <div class="stat-sub">par kg</div>
+      </div>
+    </div>
+  `;
+
+  // Chart : daily CA + kg (bars+line or simple bars)
+  html += `
+    <div class="chart-container">
+      <h3 class="chart-title">${isStr ? 'Marge' : 'Évolution'} jour par jour</h3>
+      <div class="chart-box">${chartDailyCA(agg)}</div>
+    </div>
+  `;
+
+  // Chart : cumulative CA
+  html += `
+    <div class="chart-container">
+      <h3 class="chart-title">${isStr ? 'Marge' : 'CA'} cumulé depuis le début</h3>
+      <div class="chart-box">${chartCumulative(agg)}</div>
+    </div>
+  `;
+
+  // Répartition par type de produit (pie/camembert) - asperges only or mixed
+  if (dashMode !== 'str') {
+    const typeBreakdown = computeAspTypeBreakdown();
+    if (typeBreakdown.length) {
+      html += `
+        <div class="chart-container">
+          <h3 class="chart-title">Répartition par type — Asperges</h3>
+          <div class="chart-box">${chartPie(typeBreakdown)}</div>
+        </div>
+      `;
+    }
+  }
+  if (dashMode === 'str' || (dashMode === 'all' && state.strCategories.length)) {
+    const catBreakdown = computeStrCatBreakdown();
+    if (catBreakdown.length) {
+      html += `
+        <div class="chart-container">
+          <h3 class="chart-title">Répartition par catégorie — Fraises</h3>
+          <div class="chart-box">${chartPie(catBreakdown, true)}</div>
+        </div>
+      `;
+    }
+  }
+
+  // Champ adulte vs jeune (only for asp)
+  if (dashMode !== 'str') {
+    const fieldComp = computeFieldComparison();
+    if (fieldComp.adulte > 0 || fieldComp.jeune > 0) {
+      html += `
+        <div class="chart-container">
+          <h3 class="chart-title">Champ adulte vs champ jeune</h3>
+          <div class="chart-box">${chartFieldComparison(fieldComp)}</div>
+        </div>
+      `;
+    }
+  }
+
+  // Projection fin de saison
+  const projection = computeProjection(agg, totalCa);
+  if (projection) {
+    html += `
+      <div class="chart-container">
+        <h3 class="chart-title">Projection fin de saison</h3>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;padding:8px 0;">
+          <div>
+            <div style="font-size:13px;color:var(--text-muted);">Actuel</div>
+            <div style="font-family:var(--font-display);font-size:22px;font-weight:600;">${formatEuro(totalCa)}</div>
+          </div>
+          <div style="font-size:20px;color:var(--text-subtle);">→</div>
+          <div style="text-align:right;">
+            <div style="font-size:13px;color:var(--text-muted);">Projection</div>
+            <div style="font-family:var(--font-display);font-size:22px;font-weight:600;color:${dashMode === 'str' ? 'var(--str-primary-dark)' : 'var(--asp-primary-dark)'};">${formatEuro(projection.projected)}</div>
+          </div>
+        </div>
+        <div style="font-size:13px;color:var(--text-muted);margin-top:8px;">Basé sur ${agg.length} jour(s) de données · moy. ${formatEuro(projection.avg)}/jour</div>
+      </div>
+    `;
+  }
+
+  // Meilleur jour de la semaine
+  const dowStats = computeDowStats(agg);
+  if (dowStats) {
+    html += `
+      <div class="chart-container">
+        <h3 class="chart-title">Meilleur jour de la semaine</h3>
+        <div class="chart-box">${chartDow(dowStats)}</div>
+      </div>
+    `;
+  }
+
+  // Vue semaine complète (tableau)
+  html += `
+    <div class="chart-container">
+      <h3 class="chart-title">Semaine en cours</h3>
+      ${tableWeek(agg)}
+    </div>
+  `;
+
+  // Classement cueilleurs (asp only)
+  if (dashMode !== 'str') {
+    const ranking = computePickerRanking();
+    if (ranking.length) {
+      html += `
+        <div class="chart-container">
+          <h3 class="chart-title">Classement des cueilleurs</h3>
+          ${ranking.map((r, i) => `
+            <div class="rank-item ${i === 0 ? 'top' : ''}">
+              <div class="pos">${i + 1}</div>
+              <div class="info">
+                <div class="name">${r.name}</div>
+                <div class="detail">${r.days} jour(s) · ${r.rows} rangs</div>
+              </div>
+              <div class="total">${formatKg(r.kg)}</div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+  }
+
+  container.innerHTML = html;
+}
+
+function computeAspTypeBreakdown() {
+  const map = {};
+  state.products.forEach(p => { map[p.id] = { name: p.name, kg: 0, ca: 0 }; });
+  Object.values(state.aspDays).forEach(day => {
+    Object.entries(day.products || {}).forEach(([pid, v]) => {
+      if (!map[pid]) map[pid] = { name: pid, kg: 0, ca: 0 };
+      map[pid].kg += +v.kg || 0;
+      map[pid].ca += (+v.kg || 0) * (+v.price || 0);
+    });
+  });
+  return Object.values(map).filter(x => x.ca > 0);
+}
+
+function computeStrCatBreakdown() {
+  const map = {};
+  state.strCategories.forEach(c => { map[c.id] = { name: c.name, kg: 0, ca: 0 }; });
+  Object.values(state.strDays).forEach(day => {
+    Object.entries(day.items || {}).forEach(([cid, v]) => {
+      if (!map[cid]) map[cid] = { name: cid, kg: 0, ca: 0 };
+      map[cid].kg += +v.kg || 0;
+      map[cid].ca += (+v.kg || 0) * (+v.price || 0);
+    });
+  });
+  return Object.values(map).filter(x => x.ca > 0);
+}
+
+function computeFieldComparison() {
+  let adulte = 0, jeune = 0, aRows = 0, jRows = 0;
+  Object.values(state.aspDays).forEach(day => {
+    (day.rows?.adulte || []).forEach(e => { adulte += +e.kg || 0; aRows += (e.rows || []).length; });
+    (day.rows?.jeune || []).forEach(e => { jeune += +e.kg || 0; jRows += (e.rows || []).length; });
+  });
+  return { adulte, jeune, aRows, jRows };
+}
+
+function computeProjection(agg, totalCa) {
+  if (!agg.length) return null;
+  const avg = totalCa / agg.length;
+  let remainingDays = null;
+  if (state.config.seasonEnd) {
+    const end = new Date(state.config.seasonEnd);
+    const today = new Date();
+    const diff = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+    remainingDays = Math.max(0, diff);
+  } else {
+    // Default: assume 60 days total saison
+    remainingDays = Math.max(0, 60 - agg.length);
+  }
+  return { avg, projected: totalCa + avg * remainingDays, remaining: remainingDays };
+}
+
+function computeDowStats(agg) {
+  const days = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+  const stats = days.map(d => ({ day: d, ca: 0, count: 0 }));
+  agg.forEach(a => {
+    const [y, m, d] = a.date.split('-');
+    const dow = new Date(+y, +m - 1, +d).getDay();
+    stats[dow].ca += a.ca;
+    stats[dow].count += 1;
+  });
+  // Average ca per day of week
+  stats.forEach(s => s.avg = s.count ? s.ca / s.count : 0);
+  const hasData = stats.some(s => s.count > 0);
+  return hasData ? stats : null;
+}
+
+function computePickerRanking() {
+  const map = {};
+  Object.entries(state.aspDays).forEach(([date, day]) => {
+    ['adulte', 'jeune'].forEach(f => {
+      (day.rows?.[f] || []).forEach(e => {
+        const name = (e.picker || '').trim();
+        if (!name) return;
+        if (!map[name]) map[name] = { name, kg: 0, rows: 0, days: new Set() };
+        map[name].kg += +e.kg || 0;
+        map[name].rows += (e.rows || []).length;
+        map[name].days.add(date);
+      });
+    });
+  });
+  return Object.values(map)
+    .map(r => ({ ...r, days: r.days.size }))
+    .sort((a, b) => b.kg - a.kg);
+}
+
+/* =====================================================================
+   CHARTS (SVG)
+   ===================================================================== */
+
+function chartDailyCA(agg) {
+  if (!agg.length) return '<p>Aucune donnée.</p>';
+  const W = 340, H = 180, pad = { t: 16, r: 10, b: 28, l: 36 };
+  const iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
+  const maxCa = Math.max(...agg.map(a => a.ca), 1);
+  const barW = Math.max(4, iw / agg.length - 2);
+  const primary = dashMode === 'str' ? '#b8312a' : '#2d6a3f';
+
+  const bars = agg.map((a, i) => {
+    const x = pad.l + i * (iw / agg.length);
+    const h = (a.ca / maxCa) * ih;
+    const y = pad.t + (ih - h);
+    return `<rect x="${x}" y="${y}" width="${barW}" height="${h}" fill="${primary}" rx="2" opacity="0.85"/>`;
+  }).join('');
+
+  // Y axis labels
+  const yLabels = [0, maxCa / 2, maxCa].map(v => {
+    const y = pad.t + ih - (v / maxCa) * ih;
+    return `<text x="${pad.l - 4}" y="${y + 3}" text-anchor="end" font-size="10" fill="#9a9a9a">${v.toFixed(0)}€</text>`;
+  }).join('');
+
+  // X labels (first, middle, last)
+  const xIdx = [0, Math.floor(agg.length / 2), agg.length - 1].filter((v, i, a) => a.indexOf(v) === i);
+  const xLabels = xIdx.map(i => {
+    const a = agg[i];
+    const x = pad.l + i * (iw / agg.length) + barW / 2;
+    const [y, m, d] = a.date.split('-');
+    return `<text x="${x}" y="${H - 10}" text-anchor="middle" font-size="10" fill="#6b6b6b">${d}/${m}</text>`;
+  }).join('');
+
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    <line x1="${pad.l}" y1="${pad.t + ih}" x2="${W - pad.r}" y2="${pad.t + ih}" stroke="#e4e0d5" stroke-width="1"/>
+    ${bars}${yLabels}${xLabels}
+  </svg>`;
+}
+
+function chartCumulative(agg) {
+  if (!agg.length) return '<p>Aucune donnée.</p>';
+  const W = 340, H = 180, pad = { t: 16, r: 10, b: 28, l: 42 };
+  const iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
+  let cum = 0;
+  const data = agg.map(a => ({ date: a.date, val: (cum += a.ca) }));
+  const maxV = data[data.length - 1].val || 1;
+  const primary = dashMode === 'str' ? '#b8312a' : '#2d6a3f';
+  const primaryLight = dashMode === 'str' ? '#f7e5e3' : '#e8f0e6';
+
+  const pts = data.map((d, i) => {
+    const x = pad.l + (i / Math.max(1, data.length - 1)) * iw;
+    const y = pad.t + ih - (d.val / maxV) * ih;
+    return `${x},${y}`;
+  }).join(' ');
+
+  const areaPath = `M ${pad.l},${pad.t + ih} L ${pts.replace(/\s/g, ' L ')} L ${pad.l + iw},${pad.t + ih} Z`;
+
+  const yLabels = [0, maxV / 2, maxV].map(v => {
+    const y = pad.t + ih - (v / maxV) * ih;
+    return `<text x="${pad.l - 4}" y="${y + 3}" text-anchor="end" font-size="10" fill="#9a9a9a">${v.toFixed(0)}€</text>`;
+  }).join('');
+
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    <line x1="${pad.l}" y1="${pad.t + ih}" x2="${W - pad.r}" y2="${pad.t + ih}" stroke="#e4e0d5" stroke-width="1"/>
+    <path d="${areaPath}" fill="${primaryLight}"/>
+    <polyline points="${pts}" fill="none" stroke="${primary}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    ${yLabels}
+    <text x="${W - pad.r}" y="${pad.t + 8}" text-anchor="end" font-size="11" font-weight="700" fill="${primary}">${maxV.toFixed(0)} €</text>
+  </svg>`;
+}
+
+function chartPie(data, isStr = false) {
+  const total = data.reduce((s, d) => s + d.ca, 0);
+  if (!total) return '<p>Aucune donnée.</p>';
+  const W = 320, H = 200, cx = 100, cy = 100, r = 72;
+  const colors = isStr
+    ? ['#b8312a', '#d54a3f', '#e67569', '#f0a09a', '#f7c5c0', '#fadcd9']
+    : ['#2d6a3f', '#5a9456', '#7fb377', '#a5ce9d', '#c7deaf', '#e1ecc5'];
+
+  let angle = -Math.PI / 2;
+  const paths = [];
+  const legend = [];
+
+  data.forEach((d, i) => {
+    const pct = d.ca / total;
+    const slice = pct * Math.PI * 2;
+    const x1 = cx + Math.cos(angle) * r;
+    const y1 = cy + Math.sin(angle) * r;
+    const x2 = cx + Math.cos(angle + slice) * r;
+    const y2 = cy + Math.sin(angle + slice) * r;
+    const large = slice > Math.PI ? 1 : 0;
+    const color = colors[i % colors.length];
+    paths.push(`<path d="M ${cx},${cy} L ${x1},${y1} A ${r},${r} 0 ${large} 1 ${x2},${y2} Z" fill="${color}"/>`);
+    angle += slice;
+    legend.push({ name: d.name, pct, color, ca: d.ca });
+  });
+
+  const legendHtml = legend.map(l => `
+    <g>
+      <rect x="200" y="${20 + legend.indexOf(l) * 22}" width="10" height="10" rx="2" fill="${l.color}"/>
+      <text x="216" y="${29 + legend.indexOf(l) * 22}" font-size="11" fill="#2a2a2a" font-weight="600">${l.name.length > 14 ? l.name.slice(0, 14) + '…' : l.name}</text>
+      <text x="216" y="${29 + legend.indexOf(l) * 22 + 12}" font-size="10" fill="#6b6b6b">${(l.pct * 100).toFixed(0)}% · ${l.ca.toFixed(0)}€</text>
+    </g>
+  `).join('');
+
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    ${paths.join('')}
+    <circle cx="${cx}" cy="${cy}" r="36" fill="#ffffff"/>
+    <text x="${cx}" y="${cy - 2}" text-anchor="middle" font-size="11" fill="#6b6b6b">Total</text>
+    <text x="${cx}" y="${cy + 14}" text-anchor="middle" font-size="14" font-weight="700" fill="#2a2a2a">${total.toFixed(0)}€</text>
+    ${legendHtml}
+  </svg>`;
+}
+
+function chartFieldComparison(comp) {
+  const W = 340, H = 160, pad = { t: 20, r: 16, b: 50, l: 16 };
+  const iw = W - pad.l - pad.r;
+  const max = Math.max(comp.adulte, comp.jeune, 1);
+  const barW = (iw - 40) / 2;
+  const ih = H - pad.t - pad.b;
+
+  const hA = (comp.adulte / max) * ih;
+  const hJ = (comp.jeune / max) * ih;
+
+  const xA = pad.l + 20;
+  const xJ = pad.l + iw - 20 - barW;
+
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    <rect x="${xA}" y="${pad.t + ih - hA}" width="${barW}" height="${hA}" fill="#2d6a3f" rx="8"/>
+    <rect x="${xJ}" y="${pad.t + ih - hJ}" width="${barW}" height="${hJ}" fill="#5a9456" rx="8"/>
+    <text x="${xA + barW/2}" y="${pad.t + ih - hA - 6}" text-anchor="middle" font-size="13" font-weight="700" fill="#1f4d2c">${comp.adulte.toFixed(0)} kg</text>
+    <text x="${xJ + barW/2}" y="${pad.t + ih - hJ - 6}" text-anchor="middle" font-size="13" font-weight="700" fill="#1f4d2c">${comp.jeune.toFixed(0)} kg</text>
+    <text x="${xA + barW/2}" y="${H - 28}" text-anchor="middle" font-size="12" font-weight="600" fill="#2a2a2a">Champ adulte</text>
+    <text x="${xA + barW/2}" y="${H - 14}" text-anchor="middle" font-size="10" fill="#6b6b6b">${comp.aRows} rangs</text>
+    <text x="${xJ + barW/2}" y="${H - 28}" text-anchor="middle" font-size="12" font-weight="600" fill="#2a2a2a">Champ jeune</text>
+    <text x="${xJ + barW/2}" y="${H - 14}" text-anchor="middle" font-size="10" fill="#6b6b6b">${comp.jRows} rangs</text>
+  </svg>`;
+}
+
+function chartDow(stats) {
+  const W = 340, H = 160, pad = { t: 16, r: 8, b: 32, l: 8 };
+  const iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
+  const barW = iw / 7 - 4;
+  const maxAvg = Math.max(...stats.map(s => s.avg), 1);
+  const primary = dashMode === 'str' ? '#b8312a' : '#2d6a3f';
+  const bars = stats.map((s, i) => {
+    const x = pad.l + i * (iw / 7) + 2;
+    const h = (s.avg / maxAvg) * ih;
+    const y = pad.t + ih - h;
+    const isBest = s.avg === maxAvg && s.count > 0;
+    return `
+      <rect x="${x}" y="${y}" width="${barW}" height="${h}" fill="${isBest ? primary : '#c9c3b0'}" rx="4"/>
+      <text x="${x + barW/2}" y="${H - 16}" text-anchor="middle" font-size="11" font-weight="600" fill="#2a2a2a">${s.day}</text>
+      <text x="${x + barW/2}" y="${H - 4}" text-anchor="middle" font-size="9" fill="#6b6b6b">${s.avg.toFixed(0)}€</text>
+    `;
+  }).join('');
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${bars}</svg>`;
+}
+
+function tableWeek(agg) {
+  // Current week Monday->Sunday
+  const today = new Date();
+  const dow = today.getDay(); // 0=Dim
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - ((dow + 6) % 7));
+  monday.setHours(0, 0, 0, 0);
+
+  const rows = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    const ymd = todayStr(d);
+    const data = agg.find(a => a.date === ymd);
+    const dayName = d.toLocaleDateString('fr-FR', { weekday: 'short' });
+    const dm = d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+    rows.push(`
+      <tr>
+        <td><b>${dayName}</b> ${dm}</td>
+        <td class="num">${data ? data.kg.toFixed(0) + ' kg' : '–'}</td>
+        <td class="num">${data ? formatEuro(data.ca) : '–'}</td>
+      </tr>
+    `);
+  }
+  return `<table class="week-table">
+    <thead><tr><th>Jour</th><th style="text-align:right;">Kg</th><th style="text-align:right;">${dashMode === 'str' ? 'Marge' : 'CA'}</th></tr></thead>
+    <tbody>${rows.join('')}</tbody>
+  </table>`;
+}
+
+/* =====================================================================
+   TRUCK (cold storage)
+   ===================================================================== */
+
+function renderTruck() {
+  const truck = state.truck || (state.truck = { rows: 6, cols: 3, crates: {} });
+  const rows = truck.rows;
+  const cols = truck.cols;
+
+  // Compute totals
+  let aspKg = 0, strKg = 0, aspCount = 0, strCount = 0, totalCount = 0;
+  Object.values(truck.crates).forEach(c => {
+    const kg = +c.kg || 0;
+    if (c.type === 'asp') { aspKg += kg; aspCount++; }
+    else if (c.type === 'str') { strKg += kg; strCount++; }
+    totalCount++;
+  });
+  document.getElementById('truckAspKg').textContent = formatKg(aspKg);
+  document.getElementById('truckAspCount').textContent = aspCount + ' caisse' + (aspCount > 1 ? 's' : '');
+  document.getElementById('truckStrKg').textContent = formatKg(strKg);
+  document.getElementById('truckStrCount').textContent = strCount + ' caisse' + (strCount > 1 ? 's' : '');
+  document.getElementById('truckTotalKg').textContent = formatKg(aspKg + strKg);
+  document.getElementById('truckOccupancy').textContent = totalCount + ' / ' + (rows * cols);
+
+  // Config inputs
+  document.getElementById('truckRows').value = rows;
+  document.getElementById('truckCols').value = cols;
+
+  // ====== VERTICAL TOP-DOWN TRUCK VIEW ======
+  // Layout: cabin at top (truck nose facing up), cargo bay below, doors at bottom.
+  // Crates arranged in a grid on the cargo floor: cols = width of truck, rows = length.
+
+  const W = 360;            // total svg width
+  const truckW = 250;       // truck body width (centered)
+  const truckX = (W - truckW) / 2;
+  const cabinH = 70;        // cabin (driver area) height
+  const cargoMargin = 8;    // padding inside cargo box
+  const crateSize = Math.min(56, (truckW - cargoMargin*2 - (cols-1)*4) / cols);
+  const crateGap = 4;
+  const cargoH = rows * crateSize + (rows - 1) * crateGap + cargoMargin*2;
+  const doorsH = 32;        // back doors area
+  const totalH = cabinH + cargoH + doorsH + 12; // small gap before doors
+
+  const cargoY = cabinH + 6; // start of cargo bay
+  const doorsY = cargoY + cargoH + 6;
+
+  // Build crate SVG
+  let cratesSvg = '';
+  // Crates inside cargo bay - row 0 = front (closest to cabin), row N-1 = back
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const key = `${r}-${c}`;
+      const crate = truck.crates[key];
+      // Center the grid horizontally inside cargo bay
+      const gridStartX = truckX + (truckW - (cols * crateSize + (cols-1) * crateGap)) / 2;
+      const x = gridStartX + c * (crateSize + crateGap);
+      const y = cargoY + cargoMargin + r * (crateSize + crateGap);
+
+      let bg, stroke, label, kgText;
+      if (!crate || !crate.type) {
+        bg = '#3a4651';
+        stroke = '#252e36';
+        label = '';
+        kgText = '';
+      } else if (crate.type === 'asp') {
+        bg = 'url(#crateAsp)';
+        stroke = '#1a3a22';
+        label = crate.label || 'Asperges';
+        kgText = (+crate.kg || 0).toFixed(1) + ' kg';
+      } else if (crate.type === 'str') {
+        bg = 'url(#crateStr)';
+        stroke = '#6e1f1a';
+        label = crate.label || 'Fraises';
+        kgText = (+crate.kg || 0).toFixed(1) + ' kg';
+      }
+
+      // Crate (top-down view: square)
+      cratesSvg += `<rect class="crate-hit" data-crate="${key}" x="${x}" y="${y}" width="${crateSize}" height="${crateSize}" rx="5" ry="5" fill="${bg}" stroke="${stroke}" stroke-width="1.5"/>`;
+
+      if (crate && crate.type) {
+        // 3D effect: top-edge highlight + grid pattern (suggests crate openings)
+        cratesSvg += `<line x1="${x+4}" y1="${y+3}" x2="${x+crateSize-4}" y2="${y+3}" stroke="rgba(255,255,255,0.35)" stroke-width="1" pointer-events="none"/>`;
+        // Cross divider on top of crate (looks like crate compartments)
+        const cx = x + crateSize/2;
+        const cy = y + crateSize/2;
+        cratesSvg += `<line x1="${x+5}" y1="${cy}" x2="${x+crateSize-5}" y2="${cy}" stroke="rgba(0,0,0,0.18)" stroke-width="0.8" pointer-events="none"/>`;
+        cratesSvg += `<line x1="${cx}" y1="${y+5}" x2="${cx}" y2="${y+crateSize-5}" stroke="rgba(0,0,0,0.18)" stroke-width="0.8" pointer-events="none"/>`;
+      }
+
+      // Label (variety/type)
+      if (label) {
+        const labelText = label.length > 11 ? label.slice(0, 10) + '…' : label;
+        const fontSize = label.length > 9 ? 10 : 11;
+        cratesSvg += `<text x="${x + crateSize/2}" y="${y + crateSize/2 - 2}" text-anchor="middle" font-size="${fontSize}" font-weight="700" fill="#fff" pointer-events="none" style="font-family: -apple-system, sans-serif;">${escapeHtml(labelText)}</text>`;
+      }
+      if (kgText) {
+        cratesSvg += `<text x="${x + crateSize/2}" y="${y + crateSize/2 + 14}" text-anchor="middle" font-size="13" font-weight="700" fill="#fff" pointer-events="none" style="font-family: -apple-system, sans-serif;">${kgText}</text>`;
+      }
+      if (!crate || !crate.type) {
+        cratesSvg += `<text x="${x + crateSize/2}" y="${y + crateSize/2 + 6}" text-anchor="middle" font-size="20" fill="#5b6772" pointer-events="none">+</text>`;
+      }
+    }
+  }
+
+  // Cabin (truck nose, top-down): rounded shape with windshield
+  const cabinShape = `
+    <!-- Cabin body -->
+    <path d="M ${truckX + 14} ${cabinH}
+             L ${truckX + 14} ${cabinH - 38}
+             Q ${truckX + 14} ${cabinH - 60} ${truckX + 35} ${cabinH - 60}
+             L ${truckX + truckW - 35} ${cabinH - 60}
+             Q ${truckX + truckW - 14} ${cabinH - 60} ${truckX + truckW - 14} ${cabinH - 38}
+             L ${truckX + truckW - 14} ${cabinH}
+             Z"
+          fill="#5a6770" stroke="#2c3640" stroke-width="2"/>
+
+    <!-- Windshield (lighter) -->
+    <path d="M ${truckX + 28} ${cabinH - 28}
+             Q ${truckX + 28} ${cabinH - 50} ${truckX + 50} ${cabinH - 50}
+             L ${truckX + truckW - 50} ${cabinH - 50}
+             Q ${truckX + truckW - 28} ${cabinH - 50} ${truckX + truckW - 28} ${cabinH - 28}
+             L ${truckX + truckW - 28} ${cabinH - 18}
+             L ${truckX + 28} ${cabinH - 18}
+             Z"
+          fill="#86c0d4" stroke="#3a5662" stroke-width="1" opacity="0.85"/>
+
+    <!-- Side mirrors -->
+    <rect x="${truckX + 4}" y="${cabinH - 30}" width="10" height="6" rx="2" fill="#2c3640"/>
+    <rect x="${truckX + truckW - 14}" y="${cabinH - 30}" width="10" height="6" rx="2" fill="#2c3640"/>
+
+    <!-- Headlights -->
+    <circle cx="${truckX + 28}" cy="${cabinH - 56}" r="3" fill="#fffbbf" opacity="0.9"/>
+    <circle cx="${truckX + truckW - 28}" cy="${cabinH - 56}" r="3" fill="#fffbbf" opacity="0.9"/>
+
+    <!-- Connection between cabin and cargo (chassis) -->
+    <rect x="${truckX + 30}" y="${cabinH - 4}" width="${truckW - 60}" height="10" fill="#2c3640"/>
+  `;
+
+  // Cargo bay outer container
+  const cargoBox = `
+    <!-- Cargo body (top view) -->
+    <rect x="${truckX}" y="${cargoY}" width="${truckW}" height="${cargoH}" rx="6" ry="6"
+          fill="#2c3640" stroke="#1a232c" stroke-width="3"/>
+    <!-- Inner floor -->
+    <rect x="${truckX + 4}" y="${cargoY + 4}" width="${truckW - 8}" height="${cargoH - 8}" rx="4"
+          fill="#3d4854" opacity="0.6"/>
+    <!-- "FRIGO" label inside, faded -->
+    <text x="${truckX + 12}" y="${cargoY + cargoH - 8}" font-size="9" font-weight="700"
+          fill="#5a6772" letter-spacing="1.5" style="font-family: -apple-system, sans-serif;">FRIGO</text>
+  `;
+
+  // Back doors
+  const backDoors = `
+    <!-- Door panels -->
+    <rect x="${truckX}" y="${doorsY}" width="${truckW/2 - 1}" height="${doorsH - 6}" rx="3"
+          fill="#3a4651" stroke="#1a232c" stroke-width="2"/>
+    <rect x="${truckX + truckW/2 + 1}" y="${doorsY}" width="${truckW/2 - 1}" height="${doorsH - 6}" rx="3"
+          fill="#3a4651" stroke="#1a232c" stroke-width="2"/>
+    <!-- Handles -->
+    <rect x="${truckX + truckW/2 - 14}" y="${doorsY + 8}" width="6" height="${doorsH - 22}" rx="2" fill="#1a232c"/>
+    <rect x="${truckX + truckW/2 + 8}" y="${doorsY + 8}" width="6" height="${doorsH - 22}" rx="2" fill="#1a232c"/>
+    <!-- Bumper -->
+    <rect x="${truckX - 4}" y="${doorsY + doorsH - 4}" width="${truckW + 8}" height="6" rx="2" fill="#1a232c"/>
+  `;
+
+  // Wheels (visible on the sides)
+  const wheelW = 7;
+  const wheelH = 18;
+  const wheelsSvg = `
+    <!-- Front wheels -->
+    <rect x="${truckX - wheelW + 2}" y="${cabinH - 18}" width="${wheelW}" height="${wheelH}" rx="2" fill="#1a1f25"/>
+    <rect x="${truckX + truckW - 2}" y="${cabinH - 18}" width="${wheelW}" height="${wheelH}" rx="2" fill="#1a1f25"/>
+    <!-- Rear wheels -->
+    <rect x="${truckX - wheelW + 2}" y="${doorsY - wheelH - 2}" width="${wheelW}" height="${wheelH}" rx="2" fill="#1a1f25"/>
+    <rect x="${truckX + truckW - 2}" y="${doorsY - wheelH - 2}" width="${wheelW}" height="${wheelH}" rx="2" fill="#1a1f25"/>
+  `;
+
+  const svg = `
+<svg viewBox="0 0 ${W} ${totalH}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <linearGradient id="crateAsp" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3d8f54"/>
+      <stop offset="50%" stop-color="#2d6a3f"/>
+      <stop offset="100%" stop-color="#1f4d2c"/>
+    </linearGradient>
+    <linearGradient id="crateStr" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#d04a42"/>
+      <stop offset="50%" stop-color="#b8312a"/>
+      <stop offset="100%" stop-color="#8a2320"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Asphalt / shadow under truck -->
+  <ellipse cx="${W/2}" cy="${totalH - 4}" rx="${truckW/2 + 14}" ry="6" fill="rgba(0,0,0,0.2)"/>
+
+  ${wheelsSvg}
+  ${cabinShape}
+  ${cargoBox}
+  ${cratesSvg}
+  ${backDoors}
+</svg>`;
+
+  document.getElementById('truckView').innerHTML = svg;
+
+  // Bind clicks
+  document.querySelectorAll('#truckView .crate-hit').forEach(rect => {
+    rect.addEventListener('click', () => {
+      openCrateModal(rect.dataset.crate);
+    });
+  });
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[<>&"]/g, ch => ({ '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;' }[ch]));
+}
+
+function openCrateModal(key) {
+  const truck = state.truck;
+  const existing = truck.crates[key] || null;
+  const aspProducts = state.products || [];
+  const strCats = state.strCategories || [];
+
+  const aspOpts = aspProducts.map(p => `<option value="asp::${p.id}::${escapeHtml(p.name)}" ${existing && existing.type==='asp' && existing.label===p.name ? 'selected' : ''}>${escapeHtml(p.name)}</option>`).join('');
+  const strOpts = strCats.map(c => `<option value="str::${c.id}::${escapeHtml(c.name)}" ${existing && existing.type==='str' && existing.label===c.name ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('');
+
+  showModal(existing ? `Caisse ${parseInt(key.split('-')[0])+1}-${parseInt(key.split('-')[1])+1}` : 'Nouvelle caisse', `
+    <div class="field">
+      <label>Type de produit</label>
+      <select id="crateContent">
+        <option value="">— Caisse vide —</option>
+        <optgroup label="🌱 Asperges">${aspOpts}</optgroup>
+        <optgroup label="🍓 Fraises">${strOpts}</optgroup>
+      </select>
+    </div>
+    <div class="field">
+      <label>Quantité (kg)</label>
+      <input type="number" step="0.1" inputmode="decimal" id="crateKg" value="${existing ? (+existing.kg || '') : ''}" placeholder="0">
+    </div>
+    <button class="btn" id="saveCrateBtn">Enregistrer</button>
+    ${existing ? '<button class="btn small danger" id="emptyCrateBtn" style="margin-top:8px;">🗑️ Vider cette caisse</button>' : ''}
+    <button class="btn secondary" id="cancelCrateBtn" style="margin-top:8px;">Annuler</button>
+  `);
+
+  document.getElementById('cancelCrateBtn').addEventListener('click', closeModal);
+  if (existing) {
+    document.getElementById('emptyCrateBtn').addEventListener('click', () => {
+      delete truck.crates[key];
+      saveState();
+      closeModal();
+      renderTruck();
+      showToast('Caisse vidée');
+    });
+  }
+  document.getElementById('saveCrateBtn').addEventListener('click', () => {
+    const sel = document.getElementById('crateContent').value;
+    if (!sel) {
+      // Empty crate
+      delete truck.crates[key];
+    } else {
+      const [type, id, label] = sel.split('::');
+      const kg = parseFloat(document.getElementById('crateKg').value);
+      if (isNaN(kg) || kg < 0) {
+        showToast('Quantité invalide', true);
+        return;
+      }
+      truck.crates[key] = { type, id, label, kg };
+    }
+    saveState();
+    closeModal();
+    renderTruck();
+    showToast('Caisse enregistrée ✓');
+  });
+}
+
+// Truck config buttons
+function bindTruckButtons() {
+  const cfg = document.getElementById('truckConfigBtn');
+  const empty = document.getElementById('truckEmptyBtn');
+  if (cfg && !cfg._bound) {
+    cfg._bound = true;
+    cfg.addEventListener('click', () => {
+      const r = parseInt(document.getElementById('truckRows').value);
+      const c = parseInt(document.getElementById('truckCols').value);
+      if (isNaN(r) || r < 1 || r > 12) { showToast('Longueur: 1 à 12', true); return; }
+      if (isNaN(c) || c < 1 || c > 5) { showToast('Largeur: 1 à 5', true); return; }
+      // If shrinking, warn if there are crates outside the new bounds
+      const lost = Object.keys(state.truck.crates).filter(k => {
+        const [rr, cc] = k.split('-').map(Number);
+        return rr >= r || cc >= c;
+      });
+      if (lost.length && !confirm(`${lost.length} caisse(s) sortiront de la grille. Confirmer ?`)) return;
+      lost.forEach(k => delete state.truck.crates[k]);
+      state.truck.rows = r;
+      state.truck.cols = c;
+      saveState();
+      renderTruck();
+      showToast('Camion mis à jour ✓');
+    });
+  }
+  if (empty && !empty._bound) {
+    empty._bound = true;
+    empty.addEventListener('click', () => {
+      if (!confirm('Vider toutes les caisses du camion ?')) return;
+      state.truck.crates = {};
+      saveState();
+      renderTruck();
+      showToast('Camion vidé');
+    });
+  }
+}
+
+/* =====================================================================
+   SETTINGS
+   ===================================================================== */
+
+function renderSettings() {
+  document.getElementById('setRowsAdulte').value = state.config.rowsAdulte;
+  document.getElementById('setRowsJeune').value = state.config.rowsJeune;
+  document.getElementById('setSeasonStart').value = state.config.seasonStart || '';
+  document.getElementById('setSeasonEnd').value = state.config.seasonEnd || '';
+
+  // Cloud fields
+  const c = state.cloud || {};
+  document.getElementById('setCloudEnabled').checked = !!c.enabled;
+  document.getElementById('setCloudOwner').value = c.owner || '';
+  document.getElementById('setCloudRepo').value = c.repo || '';
+  document.getElementById('setCloudBranch').value = c.branch || 'main';
+  document.getElementById('setCloudPath').value = c.path || 'data.json';
+  document.getElementById('setCloudToken').value = c.token || '';
+  updateCloudStatus();
+}
+
+function updateCloudStatus() {
+  const el = document.getElementById('cloudStatus');
+  if (!el) return;
+  const c = state.cloud || {};
+  if (!c.enabled) {
+    el.innerHTML = '<span style="color:#999;">Synchronisation désactivée.</span>';
+    return;
+  }
+  if (!cloudConfigValid()) {
+    el.innerHTML = '<span style="color:#c47b2e;">⚠ Configuration incomplète.</span>';
+    return;
+  }
+  const t = c.lastSyncAt ? new Date(c.lastSyncAt).toLocaleString('fr-FR') : 'jamais';
+  const err = SYNC.lastError ? `<br><span style="color:#b8312a;">Dernière erreur : ${SYNC.lastError}</span>` : '';
+  el.innerHTML = `<b>✓ Active.</b> Dernière synchro : ${t}.${err}`;
+}
+
+document.getElementById('saveRowsConfigBtn').addEventListener('click', () => {
+  const a = parseInt(document.getElementById('setRowsAdulte').value);
+  const j = parseInt(document.getElementById('setRowsJeune').value);
+  if (isNaN(a) || a < 1 || isNaN(j) || j < 1) {
+    showToast('Valeurs invalides', true);
+    return;
+  }
+  state.config.rowsAdulte = a;
+  state.config.rowsJeune = j;
+  saveState();
+  showToast('Configuration enregistrée ✓');
+});
+
+document.getElementById('saveSeasonBtn').addEventListener('click', () => {
+  state.config.seasonStart = document.getElementById('setSeasonStart').value || null;
+  state.config.seasonEnd = document.getElementById('setSeasonEnd').value || null;
+  saveState();
+  showToast('Saison enregistrée ✓');
+});
+
+document.getElementById('saveCloudBtn').addEventListener('click', () => {
+  const enabled = document.getElementById('setCloudEnabled').checked;
+  const owner = document.getElementById('setCloudOwner').value.trim();
+  const repo = document.getElementById('setCloudRepo').value.trim();
+  const branch = document.getElementById('setCloudBranch').value.trim() || 'main';
+  const path = document.getElementById('setCloudPath').value.trim() || 'data.json';
+  const token = document.getElementById('setCloudToken').value.trim();
+
+  if (enabled && (!owner || !repo || !token)) {
+    showToast('Remplissez tous les champs pour activer', true);
+    return;
+  }
+
+  state.cloud = state.cloud || {};
+  state.cloud.enabled = enabled;
+  state.cloud.owner = owner;
+  state.cloud.repo = repo;
+  state.cloud.branch = branch;
+  state.cloud.path = path;
+  state.cloud.token = token;
+
+  saveStateNoSync(); // save config but don't push yet
+
+  if (enabled) {
+    setSyncStatus('syncing', 'Première synchronisation…');
+    // First: pull remote data (merge with local)
+    cloudPull({ silent: false }).then(() => {
+      // Then start polling and do initial push so file is up to date
+      startCloudPolling();
+      cloudPush({ silent: true });
+      updateCloudStatus();
+    });
+  } else {
+    setSyncStatus('off', 'Désactivée');
+    if (SYNC.pollTimer) clearInterval(SYNC.pollTimer);
+    updateCloudStatus();
+  }
+  showToast('Configuration cloud enregistrée ✓');
+});
+
+document.getElementById('cloudPullBtn').addEventListener('click', async () => {
+  if (!cloudConfigValid()) {
+    showToast('Configuration cloud incomplète', true);
+    return;
+  }
+  await cloudPull({ silent: false });
+  updateCloudStatus();
+});
+
+document.getElementById('cloudPushBtn').addEventListener('click', async () => {
+  if (!cloudConfigValid()) {
+    showToast('Configuration cloud incomplète', true);
+    return;
+  }
+  await cloudPush({ silent: false });
+  updateCloudStatus();
+});
+
+// Sync badge in header = manual trigger
+document.getElementById('syncBadge').addEventListener('click', async () => {
+  if (!cloudConfigValid()) {
+    showToast('Configurez la synchro dans Réglages', true);
+    // Navigate to settings
+    document.querySelector('.nav-btn[data-tab="settings"]')?.click();
+    return;
+  }
+  await cloudPull({ silent: false });
+});
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `recolte-backup-${todayStr()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Export téléchargé ✓');
+});
+
+document.getElementById('importBtn').addEventListener('click', () => {
+  document.getElementById('importFile').click();
+});
+document.getElementById('importFile').addEventListener('change', (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  if (!confirm('Remplacer toutes les données actuelles par le fichier importé ?')) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      state = deepMerge(structuredClone(DEFAULT_STATE), data);
+      saveState();
+      showToast('Import réussi ✓');
+      renderAspToday();
+    } catch (err) {
+      showToast('Fichier invalide', true);
+    }
+  };
+  reader.readAsText(f);
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (!confirm('Effacer TOUTES les données ? Cette action est irréversible.')) return;
+  if (!confirm('Confirmez une dernière fois : tout sera effacé.')) return;
+  state = structuredClone(DEFAULT_STATE);
+  saveState();
+  showToast('Données effacées');
+  renderAspToday();
+  renderSettings();
+});
+
+/* =====================================================================
+   MODAL
+   ===================================================================== */
+
+function showModal(title, bodyHtml) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = bodyHtml;
+  document.getElementById('modalBackdrop').classList.add('active');
+}
+function closeModal() {
+  document.getElementById('modalBackdrop').classList.remove('active');
+}
+document.getElementById('modalBackdrop').addEventListener('click', (e) => {
+  if (e.target.id === 'modalBackdrop') closeModal();
+});
+
+/* =====================================================================
+   INIT
+   ===================================================================== */
+
+function updateSeasonBadge() {
+  // Determine current "season" based on date
+  const now = new Date();
+  const y = now.getFullYear();
+  document.getElementById('seasonBadge').textContent = `Saison ${y}`;
+}
+
+initAspDate();
+initStrDate();
+renderAspToday();
+updateCalcCategories();
+updateSeasonBadge();
+document.getElementById('headerDate').textContent = formatDateFr(currentAspDate);
+
+// Service worker-like: make sure page reloads save state
+window.addEventListener('beforeunload', saveState);
+
+// === Cloud sync initialization ===
+(function initCloud() {
+  if (!state.cloud) state.cloud = { enabled: false, deviceId: 'dev_' + Math.random().toString(36).slice(2, 10) };
+  if (!state.cloud.deviceId) {
+    state.cloud.deviceId = 'dev_' + Math.random().toString(36).slice(2, 10);
+    saveStateNoSync();
+  }
+  if (cloudConfigValid()) {
+    setSyncStatus('syncing', 'Synchronisation initiale…');
+    cloudPull({ silent: true }).then(() => {
+      startCloudPolling();
+    });
+    // Re-sync when app comes back to foreground
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && cloudConfigValid()) {
+        cloudPull({ silent: true });
+      }
+    });
+  } else {
+    setSyncStatus('off', 'Synchronisation désactivée');
+  }
+})();
+
+</script>
+</body>
+</html>
